@@ -49,7 +49,7 @@ def detect_footer(s1, s2, minFooterLen=15):
     return ""
 
 
-def removeHeaderFooter(text, pageSep="\x0c", maxHeaderLen=200, maxFooterLen=200):
+def remove_header_footer(text, pageSep="\x0c", maxHeaderLen=200, maxFooterLen=200):
     '''
     Remove cabeçalho e rodapé do texto, baseado na igualdade destes entre páginas.
     As páginas devem ter separador, que será removido no fim do processo.
@@ -102,3 +102,14 @@ def removeHeaderFooter(text, pageSep="\x0c", maxHeaderLen=200, maxFooterLen=200)
             except:
                 pass
     return " ".join(v)
+
+
+legal_stop_words = {
+    'grifamos', 'tribunal', 'paulo', 'julgamento', 
+    'justiça', 'judiciário', 'superior', 'ação', 
+    'civil', 'pública', 'relator', 'feito','ano', 
+    'medida', 'interesse','recurso', 'especial',
+    'direito','caso','federal', 'competência',
+    'sentença','ministro', 'coletiva', 'taxa','acordo',
+    'contrato', 'proferida', 'suspensão', 'prescrição'
+}
