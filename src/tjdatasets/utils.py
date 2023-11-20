@@ -22,7 +22,6 @@ def detect_header(s1, s2, minHeaderLen=15):
     return ""
 
 
-
 def detect_footer(s1, s2, minFooterLen=15):
     '''
     Identifica como footer o texto que se repete no final de páginas seguidas
@@ -47,6 +46,72 @@ def detect_footer(s1, s2, minFooterLen=15):
         i -= 1
         j -= 1
     return ""
+
+
+def remove_header(text, pageSep="\x0c", maxLen=200):
+    '''
+    Remove apenas o cabeçalho do texto, baseado na igualdade entre duas páginas.
+    '''
+    pages = re.split(pageSep, text)
+    pattern = ""
+    numPages = len(pages)
+    for i in range(numPages):
+        if i + 1 < numPages:
+            page0 = "".join([c for c in pages[i] if c != " " and c != "\n"])
+            page1 = "".join([c for c in pages[i + 1] if c != " " and c != "\n"])
+            end0 = maxLen
+            end1 = maxLen
+            if end0 > len(page0):
+                end0 = len(page0)
+            if end1 > len(page1):
+                end1 = len(page1)
+            header = detect_header(page0[:end0], page1[:end1])
+            if header:
+                pattern = r"\s*".join(header)
+        if pattern:
+            try:
+                res = re.search(pattern, pages[i])
+                if res and res.end() < maxLen:
+                    pages[i] = pages[i][res.end():]
+            except:
+                pass
+
+    return f"{pageSep}".join(pages)
+
+
+def remove_footer(text, pageSep="\x0c", maxLen=200):
+    '''
+    Remove apenas o rodapé do texto, baseado na igualdade entre páginas.
+    '''
+    pages = re.split(pageSep, text)
+    pattern = ""
+    numPages = len(pages)
+
+    for i in range(numPages):
+        if i + 1 < numPages:
+            page0 = "".join([c for c in pages[i] if c != " "])
+            page1 = "".join([c for c in pages[i + 1] if c != " "])
+            begin0 = len(page0) - maxLen
+            begin1 = len(page1) - maxLen
+            if begin0 < 0:
+                begin0 = 0
+            if begin1 < 0:
+                begin1 = 0
+            footer = detect_footer(page0[begin0:], page1[begin1:])
+            if footer:
+                footer = footer.strip()
+                pattern = r"\s*".join(footer)
+        if pattern:
+            try:
+                iter_res = re.finditer(pattern, pages[i])
+                res = [m for m in iter_res]
+                if len(res) > 0:
+                    if len(pages[i]) - res[-1].start() < maxLen:
+                        pages[i] = pages[i][: res[-1].start()]
+            except:
+                pass
+        
+    return f"{pageSep}".join(pages)
 
 
 def remove_header_footer(text, pageSep="\x0c", maxHeaderLen=200, maxFooterLen=200):
@@ -101,7 +166,7 @@ def remove_header_footer(text, pageSep="\x0c", maxHeaderLen=200, maxFooterLen=20
                         v[i] = v[i][: res[-1].start()]
             except:
                 pass
-    return " ".join(v)
+    return f"{pageSep}".join(v)
 
 
 legal_stop_words = {
