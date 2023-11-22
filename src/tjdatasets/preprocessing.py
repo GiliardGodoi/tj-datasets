@@ -8,10 +8,10 @@ abbreviations = {
     r'r\.' : r'respeitável ',
     r'fl\.? (?=\d)'  : r'folha',
     r'fls\.? (?=\d)' :  r'folha',
-    r'REsp\.?' : 'Recurso especial',
     r'v\.u\.' : r'votação_unâmime'
 }
 
+## https://www.stj.jus.br/docs_internet/revista/eletronica/stj-revista-eletronica-2021_263_2_capAbreviaturaseSiglas.pdf
 acronyms = {
     r'rel\.?\s+' : r'relator ',
     r'min\.?\s+' : r'ministro ',
