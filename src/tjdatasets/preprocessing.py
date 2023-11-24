@@ -4,9 +4,11 @@ from typing import List
 from nltk.tokenize import word_tokenize, RegexpTokenizer
 from nltk.stem import RSLPStemmer
 
+DEFAULT_PUNCTUATION = '!"#$%&\'()*+,-./:;<=>?@[\]^_`{|}~' + '—”“'
+
 ## https://www.stj.jus.br/docs_internet/revista/eletronica/stj-revista-eletronica-2021_263_2_capAbreviaturaseSiglas.pdf
-expressions = {
-    r'exmo\.?s? ' : 'excelentíssimo',
+EXPRESSIONS = {
+    r'exmo\.?s?(\s)' : r'excelentíssimo\g<1>',
     r'(\W+)n\.(\W+)' : r'',
     r'(\W+)c\.(\W+)' : r'\g<1>colendo\g<2>',
     r'(W+)dju\.?(\W+)' :  r'\g<1>diário_justiça_união\g<2>',
@@ -149,14 +151,13 @@ def remove_word_stress(text : str) -> str:
         )
 
 
-def remove_punctuation_text(text : str) -> str:
-    punctuation = '!"#$%&\'()*+,-./:;<=>?@[\]^_`{|}~' + '—”“'
+def remove_punctuation(text : str, punctuation=DEFAULT_PUNCTUATION) -> str:
     return text.translate(
         str.maketrans(punctuation, len(punctuation) * ' ')
     )
 
 
-def regularize_expressions(text : str, mapper=expressions) -> str:
+def regularize_expressions(text : str, mapper=EXPRESSIONS) -> str:
     for pattern, replace in mapper.items():
         text = re.sub(pattern, replace, text, flags = re.MULTILINE | re.IGNORECASE)
 
