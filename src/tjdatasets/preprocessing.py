@@ -1,3 +1,4 @@
+from .utils import remove_header, remove_footer, STOP_WORDS_SPACY
 import re
 import string
 from typing import List
@@ -141,6 +142,27 @@ EXPRESSIONS = {
 }
 
 
+def remove_noise_from_header(text : str) -> str:
+    doc = list()
+    for page in re.split(r'\x0c', text):
+        page = re.sub(r'^(.*?)(PODER JUDICIÁRIO)', 'PODER JUDICIÁRIO', page, flags=re.DOTALL)
+        page = re.sub(r'PODER JUDICIÁRIO.*?TRIBUNAL DE JUSTIÇA', 'PODER JUDICIÁRIO\nTRIBUNAL DE JUSTIÇA', page, flags=re.DOTALL)
+        doc.append(page)
+
+    return '\x0c'.join(doc)
+
+
+def remove_stopwords(tokens : list, stopwords=STOP_WORDS_SPACY) -> list:
+    if type(stopwords) is list:
+        stopwords = set(stopwords)
+
+    return [token for token in tokens if token not in stopwords]
+
+
+def remove_short_words(tokens: list, min_lenght=3) -> List[str]:
+    return [token for token in tokens if len(token) > min_lenght]
+
+
 def remove_word_stress(text : str) -> str:
     '''
     Remove word stress from lowercasa words.
@@ -185,4 +207,5 @@ def stemmerize(tokens : List[str]) -> list :
     stemmer = RSLPStemmer()
     return [stemmer.stem(token) for token in tokens]
     
-
+def naive_sentence_segmenter(text: str) -> List[str]:
+    return re.split(r'\. ', text)
