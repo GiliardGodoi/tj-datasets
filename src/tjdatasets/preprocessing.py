@@ -152,14 +152,19 @@ def remove_noise_from_header(text : str) -> str:
     return '\x0c'.join(doc)
 
 
-def remove_stopwords(tokens : list, stopwords=STOP_WORDS_SPACY) -> list:
+def remove_stopwords(tokens : List[str], stopwords=STOP_WORDS_SPACY) -> List[str]:
+    if not type(tokens) is list:
+        raise TypeError(f"tokens should be a list of strings, but received a {type(tokens)}.\nConsider apply a tokenization before.")
+    
     if type(stopwords) is list:
         stopwords = set(stopwords)
 
     return [token for token in tokens if token not in stopwords]
 
 
-def remove_short_words(tokens: list, min_lenght=3) -> List[str]:
+def remove_short_words(tokens: List, min_lenght=3) -> List[str]:
+    if not type(tokens) is list:
+        raise TypeError(f"tokens should be a list of strings, but received a {type(tokens)}.\nConsider apply a tokenization before.")
     return [token for token in tokens if len(token) > min_lenght]
 
 
