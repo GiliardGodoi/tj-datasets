@@ -5,22 +5,22 @@ from typing import List
 from nltk.tokenize import word_tokenize, RegexpTokenizer
 from nltk.stem import RSLPStemmer
 
-DEFAULT_PUNCTUATION = '!"#$%&\'()*+,-./:;<=>?@[\]^_`{|}~' + '—”“'
+DEFAULT_PUNCTUATION = '!"#$%&\'()*+,-./:;<=>?@[\]^_`{|}~' + '—”“ªº°'
 
 ## https://www.stj.jus.br/docs_internet/revista/eletronica/stj-revista-eletronica-2021_263_2_capAbreviaturaseSiglas.pdf
 EXPRESSIONS = {
-    r'exmo\.?s?(\s)' : r'excelentíssimo\g<1>',
+    r'exmo\.?s?\.?(\s)' : r'excelentíssimo\g<1>',
     r'(\W+)n\.(\W+)' : r'',
     r'(\W+)c\.(\W+)' : r'\g<1>colendo\g<2>',
-    r'(W+)dju\.?(\W+)' :  r'\g<1>diário_justiça_união\g<2>',
-    r'(W+)dje\.?(\W+)' :  r'\g<1>diário_justiça_eletrônico\g<2>',
+    r'dje\.?\s+(?=\d+)' :  r'diário_justiça_união ',
+    r'dje\.?\s+(?=\d+)' :  r'diário_justiça_eletrônico ',
     r'(\W+)j\.(\W+)' : r'\g<1>julgado\g<2>',
-    r'(\W+)p\.(\W+)' : r'\g<1>página\g<2>',
+    r'(\W+)p\.?\s*(?=\d+)' : r'\g<1>página_',
     r'(\W+)r\.(\W+)' : r'\g<1>respeitável\g<2>',
     r'(\W+)t\.(\W+)' : r'\g<1>turma\g<2>',
     r'(\W+)fls\.?\d+(\W+)'  : r'folha _NUMERO_',
     r'(\W+)fls\.?\d+(\W+)' :  r'folha _NUMERO_',
-    r'v\.\s+u\.' : r'votação_unâmime',
+    r'v\.\s*u\.' : r'votação unâmime',
     r'rel\.?\s+' : r'relator ',
     r'min\.?\s+' : r'ministro ',
     r'\sidec\s ' : r' instituto_brasileiro_de_defesa_do_consumidor ',
@@ -31,9 +31,7 @@ EXPRESSIONS = {
     r'ministério público' : r'ministério_público ',
     r'ministerio público' : r'ministério_público ',
     r'código processo civil' : r'código_processo_civil  ',
-    r'cpd' : r'código_processo_civil ',
     r'código de defesa do consumidor' : r'código_defesa_consumidor ',
-    r'(\W+)cdc(\W+)' : r'\g<1>código_defesa_consumidor\g<2>',
     r'(\W+)lc(\W+)' : r'\g<1>lei_complementar\g<2>',
     r'erga omnes' : r'erga_omnes ',
     r'ação civil publica' : r'ação_civil_publica ',
@@ -62,7 +60,8 @@ EXPRESSIONS = {
     r'(\W+)fcvs(\W+)' : r'\g<1>fundo_de_compensação_de_variações_salariais\g<2>',
     r'(\W+)cp(\W+)' : r'\g<1>código_penal\g<2>',
     r'(\W+)cpc(\W+)' : r'\g<1>código_de_processo_civil\g<2>',
-    r'(\W+)cdc(\W+)' : r'\g<1>código_de_proteção_e_defesa_do_consumidor\g<2>',
+    # r'(\W+)cdc(\W+)' : r'\g<1>código_de_proteção_e_defesa_do_consumidor\g<2>',
+    r'(\W+)cdc(\W+)' : r'\g<1>código_defesa_consumidor\g<2>',
     r'(\W+)cpp(\W+)' : r'\g<1>código_de_processo_penal\g<2>',
     r'(\W+)cr(\W+)' : r'\g<1>carta_rogatória\g<2>',
     r'(\W+)cri(\W+)' : r'\g<1>carta_rogatória_impugnada\g<2>',
