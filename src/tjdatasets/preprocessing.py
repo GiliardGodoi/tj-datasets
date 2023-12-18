@@ -19,7 +19,7 @@ EXPRESSIONS = {
     r'(\W+)r\.(\W+)' : r'\g<1>respeitável\g<2>',
     r'(\W+)t\.(\W+)' : r'\g<1>turma\g<2>',
     r'(\W+)fls\.?\d+(\W+)'  : r'\g<1>_FOLHA_NUMERO_\g<2>',
-    r'(\W+)fls\.?\d+(\W+)' :  r'\g<1>_FOLHA_NUMERO_\g<2>',
+    r'(\W+)fl\.?\d+(\W+)' :  r'\g<1>_FOLHA_NUMERO_\g<2>',
     r'v\.\s*u\.' : r'votação unâmime',
     r'rel\.?\s+' : r'relator ',
     r'min\.?\s+' : r'ministro ',
