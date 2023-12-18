@@ -5,7 +5,9 @@ from typing import List
 from nltk.tokenize import word_tokenize, RegexpTokenizer
 from nltk.stem import RSLPStemmer
 
-DEFAULT_PUNCTUATION = '!"#$%&\'()*+,-./:;<=>?@[\]^`{|}~' + '—”“ªº°'
+# DEFAULT_PUNCTUATION = string.punctuation
+# DEFAULT_PUNCTUATION = '!"#$%&\'()*+,-./:;<=>?@[\]^`{|}~' + '—”“ªº°'
+DEFAULT_PUNCTUATION = '!"#$%&\'()*+,-./:;<=>?@[\]^`{|}~—”“ªº°'
 
 ## https://www.stj.jus.br/docs_internet/revista/eletronica/stj-revista-eletronica-2021_263_2_capAbreviaturaseSiglas.pdf
 EXPRESSIONS = {
