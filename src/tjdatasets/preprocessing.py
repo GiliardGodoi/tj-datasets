@@ -5,7 +5,7 @@ from typing import List
 from nltk.tokenize import word_tokenize, RegexpTokenizer
 from nltk.stem import RSLPStemmer
 
-DEFAULT_PUNCTUATION = '!"#$%&\'()*+,-./:;<=>?@[\]^_`{|}~' + '—”“ªº°'
+DEFAULT_PUNCTUATION = '!"#$%&\'()*+,-./:;<=>?@[\]^`{|}~' + '—”“ªº°'
 
 ## https://www.stj.jus.br/docs_internet/revista/eletronica/stj-revista-eletronica-2021_263_2_capAbreviaturaseSiglas.pdf
 EXPRESSIONS = {
@@ -18,8 +18,8 @@ EXPRESSIONS = {
     r'(\W+)p\.?\s*(?=\d+)' : r'\g<1>página_',
     r'(\W+)r\.(\W+)' : r'\g<1>respeitável\g<2>',
     r'(\W+)t\.(\W+)' : r'\g<1>turma\g<2>',
-    r'(\W+)fls\.?\d+(\W+)'  : r'folha _NUMERO_',
-    r'(\W+)fls\.?\d+(\W+)' :  r'folha _NUMERO_',
+    r'(\W+)fls\.?\d+(\W+)'  : r'\g<1>_FOLHA_NUMERO_\g<2>',
+    r'(\W+)fls\.?\d+(\W+)' :  r'\g<1>_FOLHA_NUMERO_\g<2>',
     r'v\.\s*u\.' : r'votação unâmime',
     r'rel\.?\s+' : r'relator ',
     r'min\.?\s+' : r'ministro ',
