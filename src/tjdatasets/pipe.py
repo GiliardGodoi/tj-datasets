@@ -33,7 +33,7 @@ class PreprocessamentoLimpo(BaseEstimator, TransformerMixin):
       target: define a coluna alvo, que contém os documentos a serem processados.
       transformed: define a coluna que será gerada
     '''
-    self.target = content
+    self.content = content
 
   def fit(self, X, y=None):
     return self
