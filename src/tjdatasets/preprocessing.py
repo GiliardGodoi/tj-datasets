@@ -1,147 +1,179 @@
-from .utils import remove_header, remove_footer, STOP_WORDS_SPACY
 import re
-import string
 from typing import List
 from nltk.tokenize import word_tokenize, RegexpTokenizer
 from nltk.stem import RSLPStemmer
 
-# DEFAULT_PUNCTUATION = string.punctuation
-# DEFAULT_PUNCTUATION = '!"#$%&\'()*+,-./:;<=>?@[\]^`{|}~' + '—”“ªº°'
-DEFAULT_PUNCTUATION = '!"#$%&\'()*+,-./:;<=>?@[\]^`{|}~—”“ªº°'
+from .utils import (STOP_WORDS_SPACY, 
+                    JUR_EXPRESSIONS, 
+                    DEFAULT_PUNCTUATION)
 
-## https://www.stj.jus.br/docs_internet/revista/eletronica/stj-revista-eletronica-2021_263_2_capAbreviaturaseSiglas.pdf
-EXPRESSIONS = {
-    r'exmo\.?s?\.?(\s)' : r'excelentíssimo\g<1>',
-    r'(\W+)n\.(\W+)' : r'',
-    r'(\W+)c\.(\W+)' : r'\g<1>colendo\g<2>',
-    r'dje\.?\s+(?=\d+)' :  r'diário_justiça_união ',
-    r'dje\.?\s+(?=\d+)' :  r'diário_justiça_eletrônico ',
-    r'(\W+)j\.(\W+)' : r'\g<1>julgado\g<2>',
-    r'(\W+)p\.?\s*(?=\d+)' : r'\g<1>página_',
-    r'(\W+)r\.(\W+)' : r'\g<1>respeitável\g<2>',
-    r'(\W+)t\.(\W+)' : r'\g<1>turma\g<2>',
-    r'(\W+)fls\.?\d+(\W+)'  : r'\g<1>_FOLHA_NUMERO_\g<2>',
-    r'(\W+)fl\.?\d+(\W+)' :  r'\g<1>_FOLHA_NUMERO_\g<2>',
-    r'v\.\s*u\.' : r'votação unâmime',
-    r'rel\.?\s+' : r'relator ',
-    r'min\.?\s+' : r'ministro ',
-    r'\sidec\s ' : r' instituto_brasileiro_de_defesa_do_consumidor ',
-    r'art\.? ' : r'artigo ',
-    r'arts\.? ' : r'artigos ',
-    r'inc\.? ' : r'inciso ',
-    r'§{1,2}\s*(?=[\d])' : r'parágrafo ',
-    r'ministério público' : r'ministério_público ',
-    r'ministerio público' : r'ministério_público ',
-    r'código processo civil' : r'código_processo_civil  ',
-    r'código de defesa do consumidor' : r'código_defesa_consumidor ',
-    r'(\W+)lc(\W+)' : r'\g<1>lei_complementar\g<2>',
-    r'erga omnes' : r'erga_omnes ',
-    r'ação civil publica' : r'ação_civil_publica ',
-    r'stj' : r'superior_tribunal_de_justiça ',
-    r'stf' : r'supremo_tribunal_federal ',
-    r'(\W+)são\s+paulo(\W+)' : r'\g<1>são_paulo\g<2>',
-    r'(\W+)sp(\W+)' : r'\g<1>são_paulo\g<2>',
-    r'(\W+)ac(\W+)' : r'\g<1>apelação_cível\g<2>',
-    r'(\W+)adm(\W+)' : r'\g<1>administrativo\g<2>',
-    r'(\W+)ag(\W+)' : r'\g<1>agravo_de_instrumento\g<2>',
-    r'(\W+)agrg(\W+)' : r'\g<1>agravo_regimental\g<2>',
-    r'(\W+)ai(\W+)' : r'\g<1>arguição_de_inconstitucionalidade\g<2>',
-    r'(\W+)adpf(\W+)' : r'\g<1>arguição_de_descumprimento_de_preceito_fundamental\g<2>',
-    # r'(\W+)ana(\W+)' : r' agência_nacional_de_águas ',
-    r'(\W+)anatel(\W+)' : r'\g<1>agência_nacional_de_telecomunicações\g<2>',
-    r'(\W+)aneel(\W+)' : r'\g<1>agência_nacional_de_energia_elétrica\g<2>',
-    r'(\W+)apn(\W+)' : r'\g<1>ação_penal\g<2>',
-    # '(\W+)ar(\W+)' : r'\g<1>ação rescisória\g<2>',
-    r'(\W+)cat(\W+)' : r'\g<1>conflito_de_atribuições\g<2>',
-    # r'(\W+)cc(\W+)' : r'\g<1>código civil\g<2>',
-    # r'(\W+)cc(\W+)' : r'\g<1>conflito de competência\g<2>',
-    r'(\W+)ccm(\W+)' : r'\g<1>código_comercial\g<2>',
-    r'(\W+)cm(\W+)' : r'\g<1>comercial\g<2>',
-    r'(\W+)cne(\W+)' : r'\g<1>conselho_nacional_de_educação_com_comunicação\g<2>',
-    r'(\W+)cef(\W+)' : r'\g<1>caixa_econômica_federal\g<2>',
-    r'(\W+)fcvs(\W+)' : r'\g<1>fundo_de_compensação_de_variações_salariais\g<2>',
-    r'(\W+)cp(\W+)' : r'\g<1>código_penal\g<2>',
-    r'(\W+)cpc(\W+)' : r'\g<1>código_de_processo_civil\g<2>',
-    # r'(\W+)cdc(\W+)' : r'\g<1>código_de_proteção_e_defesa_do_consumidor\g<2>',
-    r'(\W+)cdc(\W+)' : r'\g<1>código_defesa_consumidor\g<2>',
-    r'(\W+)cpp(\W+)' : r'\g<1>código_de_processo_penal\g<2>',
-    r'(\W+)cr(\W+)' : r'\g<1>carta_rogatória\g<2>',
-    r'(\W+)cri(\W+)' : r'\g<1>carta_rogatória_impugnada\g<2>',
-    r'(\W+)ct(\W+)' : r'\g<1>código_de_trânsito_brasileiro\g<2>',
-    r'(\W+)ctn(\W+)' : r'\g<1>código_tributário_nacional\g<2>',
-    r'(\W+)cv(\W+)' : r'\g<1>civil\g<2>',
-    # '(\W+)d(\W+)' : r\g<1> decreto\g<2>',
-    # '(\W+)dl(\W+)' :\g<1>r' decreto-lei\g<2>',
-    r'(\W+)dnaee(\W+)' : r'\g<1>departamento_nacional_de_águas_e_energia_elétrica\g<2>',
-    # r'(\W+)e(\W+)' : r\g<1>ementário da jurisprudência do superior tribunal de justiça\g<2>',
-    r'(\W+)eac(\W+)' : r'\g<1>embargos_infringentes_em_apelação_cível\g<2>',
-    r'(\W+)ear(\W+)' : r'\g<1>embargos_infringentes_em_ação rescisória\g<2>',
-    r'(\W+)eag(\W+)' : r'\g<1>embargos_de_divergência_no_agravo\g<2>',
-    r'(\W+)ec(\W+)' : r'\g<1>emenda_constitucional\g<2>',
-    r'(\W+)eca(\W+)' : r'\g<1>estatuto_da_criança_e_do_adolescente\g<2>',
-    r'(\W+)edcl(\W+)' : r'\g<1>embargos_de_declaração\g<2>',
-    r'(\W+)ejstj(\W+)' : r'\g<1>ementário_da_jurisprudência_do_superior_tribunal_de_justiça\g<2>',
-    r'(\W+)el(\W+)' : r'\g<1>eleitoral\g<2>',
-    r'(\W+)eresp(\W+)' : r'\g<1>embargos_de_divergência_em_recurso_especial\g<2>',
-    r'(\W+)erms(\W+)' : r'\g<1>embargos_infringentes_no_recurso_em_mandado_de_segurança\g<2>',
-    r'(\W+)eximp(\W+)' : r'\g<1>exceção_de_impedimento\g<2>',
-    r'(\W+)exsusp(\W+) ' : r'\g<1>exceção_de_suspeição\g<2>',
-    r'(\W+)exverd(\W+)' : r'\g<1>exceção_da_verdade\g<2>',
-    r'(\W+)execar(\W+)' : r'\g<1>execução_em_ação_rescisória\g<2>',
-    r'(\W+)execmc(\W+)' : r'\g<1>execução_em_medida_cautelar\g<2>',
-    r'(\W+)execms(\W+)' : r'\g<1>execução_em_mandado_de_segurança\g<2>',
-    r'(\W+)hc(\W+)' : r'\g<1>habeas_corpus\g<2>',
-    r'(\W+)habeas\s+corpus(\W+)' : r'\g<1>habeas_corpus\g<2>',
-    r'(\W+)hse(\W+)' : r'\g<1>homologação_de_sentença_estrangeira\g<2>',
-    r'(\W+)idc(\W+)' : r'\g<1>incidente_de_deslocamento_de_competência\g<2>',
-    r'(\W+)iexecc(\W+)' : r'\g<1>incidente_de_execução\g<2>',
-    r'(\W+)if(\W+)' : r'\g<1>intervenção_federal\g<2>',
-    r'(\W+)ij(\W+)' : r'\g<1>interpelação_judicial\g<2>',
-    r'(\W+)inq(\W+)' : r'\g<1>inquérito\g<2>',
-    r'(\W+)ipva(\W+)' : r'\g<1>imposto_sobre_a_propriedade_de_veículos_automotores\g<2>',
-    r'(\W+)iuj(\W+)' : r'\g<1>incidente_de_uniformização_de_jurisprudência\g<2>',
-    r'(\W+)lcp(\W+)' : r'\g<1>lei_das_contravenções_penais\g<2>',
-    r'(\W+)loman(\W+)' : r'\g<1>lei_orgânica_da_magistratura\g<2>',
-    r'(\W+)lonmp(\W+)' : r'\g<1>lei_orgânica_nacional_do_ministério_público\g<2>',
-    r'(\W+)mc(\W+)' : r'\g<1>medida_cautelar\g<2>',
-    r'(\W+)mc(\W+)' : r'\g<1>ministério_das_comunicações\g<2>',
-    r'(\W+)mi(\W+)' : r'\g<1>mandado_de_injunção\g<2>',
-    r'(\W+)ms(\W+)' : r'\g<1>mandado_de_segurança\g<2>',
-    r'(\W+)nc(\W+)' : r'\g<1>notícia_crime\g<2>',
-    r'(\W+)pa(\W+)' : r'\g<1>processo_administrativo\g<2>',
-    r'(\W+)pet(\W+)' : r'\g<1>petição\g<2>',
-    r'(\W+)pext(\W+)' : r'\g<1>pedido_de_extensão\g<2>',
-    r'(\W+)pn(\W+)' : r'\g<1>penal\g<2>',
-    r'(\W+)prc(\W+)' : r'\g<1>precatório\g<2>',
-    r'(\W+)prcv(\W+)' : r'\g<1>processual_civil\g<2>',
-    r'(\W+)prpn(\W+)' : r'\g<1>processual_penal\g<2>',
-    r'(\W+)pv(\W+)' : r'\g<1>previdenciário\g<2>',
-    r'(\W+)qo(\W+)' : r'\g<1>questão_de_ordem\g<2>',
-    r'(\W+)rcl(\W+)' : r'\g<1>reclamação\g<2>',
-    r'(\W+)rd(\W+)' : r'\g<1>reconsideração_de_despacho\g<2>',
-    r'(\W+)re(\W+)' : r'\g<1>recurso_extraordinário\g<2>',
-    r'(\W+)resp(\W+)' : r'\g<1>recurso_especial\g<2>',
-    r'(\W+)rhc(\W+)' : r'\g<1>recurso_em_habeas_corpus\g<2>',
-    r'(\W+)rmi(\W+)' : r'\g<1>recurso_em_mandado_de_injunção\g<2>',
-    r'(\W+)rms(\W+)' : r'\g<1>recurso_em_mandado_de_segurança\g<2>',
-    r'(\W+)ro(\W+)' : r'\g<1>recurso_ordinário\g<2>',
-    r'(\W+)rp(\W+)' : r'\g<1>representação\g<2>',
-    r'(\W+)rtj(\W+)' : r'\g<1>revista_trimestral_de_jurisprudência\g<2>',
-    r'(\W+)ristj(\W+)' : r'\g<1>regimento_interno superior_tribunal_justiça\g<2>',
-    r'(\W+)rstj(\W+)' : r'\g<1>revista_do_superior_tribunal_de_justiça\g<2>',
-    r'(\W+)rvcr(\W+)' : r'\g<1>revisão_criminal\g<2>',
-    r'(\W+)saf(\W+)' : r'\g<1>secretaria_de_administração_federal\g<2>',
-    r'(\W+)sd(\W+)' : r'\g<1>sindicância\g<2>',
-    r'(\W+)sec(\W+)' : r'\g<1>sentença_estrangeira_contestada\g<2>',
-    r'(\W+)sf(\W+)' : r'\g<1>senado_federal\g<2>',
-    r'(\W+)sl(\W+)' : r'\g<1>suspensão_de_liminar\g<2>',
-    r'(\W+)sls(\W+) ' : r'\g<1>suspensão_de_liminar_e_de_sentença\g<2>',
-    r'(\W+)ss(\W+) ' : r'\g<1>suspensão_de_segurança\g<2>',
-    r'(\W+)sta(\W+)' : r'\g<1>suspensão_de_tutela_antecipada\g<2>',
-    r'(\W+)tr(\W+)' : r'\g<1>trabalho\g<2>',
-    r'(\W+)trbt(\W+)' : r'\g<1>tributário\g<2>',
-    r'http\S+' : r'<URL>'
-}
+def detect_header(s1, s2, minHeaderLen=15):
+    """
+    Identifica como header o texto que se repete no início de páginas seguidas
+    """
+    i = 0
+    n1 = len(s1)
+    n2 = len(s2)
+    j = minHeaderLen
+    while j < n1:
+        seq = s1[i:j]
+        k = s2.find(seq)
+        if k != -1:
+            k += minHeaderLen
+            while j < n1 and k < n2 and s1[j] == s2[k]:
+                j += 1
+                k += 1
+            return s1[i:j]
+        i += 1
+        j += 1
+    return ""
+
+
+def detect_footer(s1, s2, minFooterLen=15):
+    """
+    Identifica como footer o texto que se repete no final de páginas seguidas
+    """
+    n1 = len(s1)
+    i = n1 - minFooterLen
+    j = n1
+    while i >= 0:
+        seq = s1[i:j]
+        k = s2.rfind(seq)
+        if k != -1:
+            i -= 1
+            k -= 1
+            while i >= 0 and k >= 0 and s1[i] == s2[k]:
+                i -= 1
+                k -= 1
+            footer = s1[(i + 1) : j]
+            res = re.search(r"\n\s*\n", footer)
+            if res:
+                return footer[res.start() :]
+            return ""
+        i -= 1
+        j -= 1
+    return ""
+
+
+def remove_header_footer(text, pageSep="\x0c", maxHeaderLen=200, maxFooterLen=200):
+    """
+    Remove cabeçalho e rodapé do texto, baseado na igualdade destes entre páginas.
+    As páginas devem ter separador, que será removido no fim do processo.
+    """
+    v = re.split(pageSep, text)
+    pattern = ""
+    numPages = len(v)
+    for i in range(numPages):
+        if i + 1 < numPages:
+            page0 = "".join([c for c in v[i] if c != " " and c != "\n"])
+            page1 = "".join([c for c in v[i + 1] if c != " " and c != "\n"])
+            end0 = maxHeaderLen
+            end1 = maxHeaderLen
+            if end0 > len(page0):
+                end0 = len(page0)
+            if end1 > len(page1):
+                end1 = len(page1)
+            header = detect_header(page0[:end0], page1[:end1])
+            if header:
+                pattern = r"\s*".join(header)
+        if pattern:
+            try:
+                res = re.search(pattern, v[i])
+                if res and res.end() < maxHeaderLen:
+                    v[i] = v[i][res.end() :]
+            except:
+                pass
+    pattern = ""
+    for i in range(numPages):
+        if i + 1 < numPages:
+            page0 = "".join([c for c in v[i] if c != " "])
+            page1 = "".join([c for c in v[i + 1] if c != " "])
+            begin0 = len(page0) - maxFooterLen
+            begin1 = len(page1) - maxFooterLen
+            if begin0 < 0:
+                begin0 = 0
+            if begin1 < 0:
+                begin1 = 0
+            footer = detect_footer(page0[begin0:], page1[begin1:])
+            if footer:
+                footer = footer.strip()
+                pattern = r"\s*".join(footer)
+        if pattern:
+            try:
+                iter_res = re.finditer(pattern, v[i])
+                res = [m for m in iter_res]
+                if len(res) > 0:
+                    if len(v[i]) - res[-1].start() < maxFooterLen:
+                        v[i] = v[i][: res[-1].start()]
+            except:
+                pass
+    return f"{pageSep}".join(v)
+
+
+def remove_header(text, pageSep="\x0c", maxLen=200):
+    """
+    Remove apenas o cabeçalho do texto, baseado na igualdade entre duas páginas.
+    """
+    pages = re.split(pageSep, text)
+    pattern = ""
+    numPages = len(pages)
+    for i in range(numPages):
+        if i + 1 < numPages:
+            page0 = "".join([c for c in pages[i] if c != " " and c != "\n"])
+            page1 = "".join([c for c in pages[i + 1] if c != " " and c != "\n"])
+            end0 = maxLen
+            end1 = maxLen
+            if end0 > len(page0):
+                end0 = len(page0)
+            if end1 > len(page1):
+                end1 = len(page1)
+            header = detect_header(page0[:end0], page1[:end1])
+            if header:
+                pattern = r"\s*".join(header)
+        if pattern:
+            try:
+                res = re.search(pattern, pages[i])
+                if res and res.end() < maxLen:
+                    pages[i] = pages[i][res.end() :]
+            except:
+                pass
+
+    return f"{pageSep}".join(pages)
+
+
+def remove_footer(text, pageSep="\x0c", maxLen=200):
+    """
+    Remove apenas o rodapé do texto, baseado na igualdade entre páginas.
+    """
+    pages = re.split(pageSep, text)
+    pattern = ""
+    numPages = len(pages)
+
+    for i in range(numPages):
+        if i + 1 < numPages:
+            page0 = "".join([c for c in pages[i] if c != " "])
+            page1 = "".join([c for c in pages[i + 1] if c != " "])
+            begin0 = len(page0) - maxLen
+            begin1 = len(page1) - maxLen
+            if begin0 < 0:
+                begin0 = 0
+            if begin1 < 0:
+                begin1 = 0
+            footer = detect_footer(page0[begin0:], page1[begin1:])
+            if footer:
+                footer = footer.strip()
+                pattern = r"\s*".join(footer)
+        if pattern:
+            try:
+                iter_res = re.finditer(pattern, pages[i])
+                res = [m for m in iter_res]
+                if len(res) > 0:
+                    if len(pages[i]) - res[-1].start() < maxLen:
+                        pages[i] = pages[i][: res[-1].start()]
+            except:
+                pass
+
+    return f"{pageSep}".join(pages)
 
 
 def remove_noise_from_header(text : str) -> str:
@@ -170,6 +202,17 @@ def remove_short_words(tokens: List, min_lenght=3) -> List[str]:
     return [token for token in tokens if len(token) > min_lenght]
 
 
+def remove_short_and_stop_words(text: str, stopwords=STOP_WORDS_SPACY, min_length=3):
+
+    tokens = [
+        token
+        for token in word_tokenize(text)
+        if (len(token) > min_length) and (token not in stopwords)
+    ]
+
+    return " ".join(tokens)
+
+
 def remove_word_stress(text : str) -> str:
     '''
     Remove word stress from lowercasa words.
@@ -186,7 +229,7 @@ def remove_punctuation(text : str, punctuation=DEFAULT_PUNCTUATION) -> str:
     )
 
 
-def regularize_expressions(text : str, mapper=EXPRESSIONS) -> str:
+def regularize_expressions(text : str, mapper=JUR_EXPRESSIONS) -> str:
     for pattern, replace in mapper.items():
         text = re.sub(pattern, replace, text, flags = re.MULTILINE | re.IGNORECASE)
 
@@ -207,12 +250,8 @@ def lemmatize(text : str, model) -> list :
     return lemmatized
 
 
-def stemmerize(tokens : List[str]) -> list :
+def stemmerize(tokens : List[str], stemmer=RSLPStemmer()) -> list :
     if type(tokens) is str:
         raise TypeError("Tokens should be a list of strings")
-    
-    stemmer = RSLPStemmer()
+
     return [stemmer.stem(token) for token in tokens]
-    
-def naive_sentence_segmenter(text: str) -> List[str]:
-    return re.split(r'\. ', text)
