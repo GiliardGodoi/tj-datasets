@@ -308,3 +308,40 @@ def obter_fundamento_decisao(texto : str) -> str :
         texto_resposta = voto.text
     
     return texto_resposta
+
+def processa_acordao(row, text_column='formatado'):
+    text = row[text_column]
+
+    relator = identifica_nome_relator(text)
+
+    decisao = identifica_decisao(text)
+    eh_decisao_unanime = identifica_se_decisao_unamime(decisao)
+
+    voto = identifica_voto_relator(text, relator)
+
+    relatorio = identifica_relatorio_voto(text, voto)
+
+    fundamentacao = identifica_fundamentacao_voto(text, voto, relatorio)
+
+    divergente = identifica_voto_divergente(text, voto, decisao)
+
+    return {
+        relator.name : relator.text,
+        f"{relator.name}_regra" : relator.rule,
+
+        decisao.name : decisao.text,
+        f"{decisao.name}_regra" : decisao.rule,
+        'decisao_unanime' : eh_decisao_unanime,
+
+        voto.name : voto.text,
+        f"{voto.name}_regra" : voto.rule,
+
+        relatorio.name : relatorio.text,
+        f"{relatorio.name}_regra" : relatorio.rule,
+
+        fundamentacao.name : fundamentacao.text,
+        f"{fundamentacao.name}_regra" : fundamentacao.rule,
+
+        divergente.name : divergente.text,
+        f"{divergente.name}_regra" : divergente.rule,
+    }
