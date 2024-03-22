@@ -19,7 +19,11 @@ dependencies =[
 ]
 
 [project.optional-dependencies]
-pt_core_news_lg = [
-    "spacy>=3.0,<4.0",
-    "pt-core-news-lg>=3.0,<4.0"
+pt-core-news-sm = [
+    "spacy",
+    "pt-core-news-sm"
+]
+pt-core-news-lg = [
+    "spacy",
+    "pt-core-news-lg"
 ]
