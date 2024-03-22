@@ -16,7 +16,7 @@ STANDART_EXPRESSIONS = {
     r'c\.(?=\s+\w+)' : r'colendo ',
     r'dje\.?\s+(?=\d+)' :  r'diario_justica_uniao ',
     r'dje\.?\s+(?=\d+)' :  r'diario_justica_eletronico ',
-    r'(\W+)j\.(\W+)' : r'\g<1>julgado\g<2>',
+    r'(?:\W+)j\.\s*?\d{1,2}[\.\/]\d{1,2}[\.\/]\d{2,4}' : r'_DATA_JULGAMENTO_',
     r'(\W+)p\.?\s*(?=\d+)' : r'\g<1>pagina_',
     r'(\W+)r\.(\W+)' : r'\g<1>respeitavel\g<2>',
     r'(\W+)t\.(\W+)' : r'\g<1>turma\g<2>',
@@ -29,7 +29,14 @@ STANDART_EXPRESSIONS = {
     r'inc\.? ' : r'inciso ',
     r'§{1,2}\s*(?=[\d])' : r'paragrafo ',
     r'(\W+)lc(\W+)' : r'\g<1>lei_complementar\g<2>',
-    r'erga omnes' : r'erga_omnes ',
+
+    # expressões em latim
+    r'erga\s+omnes' : r'erga_omnes ',
+    r'quantum\s+exequendum' : r'quantum_exequendum',
+    r'quantum\s+debeatur' : r'quantum_debeatur',
+    r'habeas\s+corpus' : r'habeas_corpus',
+    r'(\W+)hc(\W+)' : r'\g<1>habeas_corpus\g<2>',
+
     r'(\W+)idec(\W+)' : r'\g<1>instituto_brasileiro_defesa_consumidor\g<2>',
     r'(\W+)stj(\W+)' : r'\g<1>superior_tribunal_justica\g<2>',
     r'superior\s+tribunal\s+(?:de\s+)?justi(?:ç|c)a' : r'superior_tribunal_justica',
@@ -97,8 +104,6 @@ STANDART_EXPRESSIONS = {
     r'(\W+)execar(\W+)' : r'\g<1>execucao_em_acao_rescisoria\g<2>',
     r'(\W+)execmc(\W+)' : r'\g<1>execucao_em_medida_cautelar\g<2>',
     r'(\W+)execms(\W+)' : r'\g<1>execucao_em_mandado_de_segurança\g<2>',
-    r'(\W+)hc(\W+)' : r'\g<1>habeas_corpus\g<2>',
-    r'(\W+)habeas\s+corpus(\W+)' : r'\g<1>habeas_corpus\g<2>',
     r'(\W+)hse(\W+)' : r'\g<1>homologacao_de_sentenca_estrangeira\g<2>',
     r'(\W+)idc(\W+)' : r'\g<1>incidente_de_deslocamento_de_competencia\g<2>',
     r'(\W+)iexecc(\W+)' : r'\g<1>incidente_de_execucao\g<2>',
@@ -167,10 +172,9 @@ STANDART_EXPRESSIONS = {
     
     # Processo 
     r"\d{7}-\d{2}\.\d{4}\.\d{1}\.\d{2}\.\d{4}" : r"_REGISTRO_JURIDICO_", # Possível formato para número de processo
-    r"registro:?\d{4}\.\d{10}" : r"_REGISTRO_JURIDICO_",  # Possível formato para código de registro
+    r"registro:?\s*?\d{1,4}\.\d{5,10}" : r"_REGISTRO_JURIDICO_",  # Possível formato para código de registro
     r"R\$\s{0,1}[\d\,\.]+" : r"_VALOR_MONETARIO_", # Possível formato de dinheiro (real)
-    r"\d{1,2}\.\d{1,2}\.\d{2,4}" : r"_DATA_", # Possível formato de data
-    r"\d{1,2}\/\d{1,2}\/\d{2,4}" : r"_DATA_", # Possível formato de data
+    r"\d{1,2}[\.\/]\d{1,2}[\.\/]\d{2,4}" : r"_DATA_", # Possível formato de data
     r"(\w+)\/(\w+)" : r"\g<1>_\g<2>",
     r"([a-zA-Z]+)(\d+)" : r"\g<1> \g<2>", # captura qualquer palavra seguida de número e acrescenta um espaço
     r"[\d\,\.]+\s{0,1}\%" : r"_PORCENTAGEM_",
