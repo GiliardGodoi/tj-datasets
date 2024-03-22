@@ -4,7 +4,8 @@ from nltk.tokenize import word_tokenize, RegexpTokenizer
 from nltk.stem import RSLPStemmer
 
 from .utils import (STOP_WORDS_SPACY, 
-                    JUR_EXPRESSIONS, 
+                    STANDART_EXPRESSIONS,
+                    STANDART_EXPRESSIONS as JUR_EXPRESSIONS, 
                     DEFAULT_PUNCTUATION)
 
 def detect_header(s1, s2, minHeaderLen=15):
