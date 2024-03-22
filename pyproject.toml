@@ -8,14 +8,17 @@ version = "0.0.2"
 authors = [
     {name="giliard", email="giliard.godoi@gmail.com"}
 ]
+readme = "README.md"
 description = "Text pre-processing utilities for TJ classification project"
+requires-python = ">=3.8"
+dependencies =[
+    "pandas",
+    "scikit-learn",
+    "nltk",
+    "spacy",
+]
 
-[tool.setuptools.dependencies]
-python = "^3.8"
-nltk = "^3.6"
-spacy = "^3.0"
-
-[tool.setuptools.extras_require]
+[project.optional-dependencies]
 pt_core_news_lg = [
     "spacy>=3.0,<4.0",
     "pt-core-news-lg>=3.0,<4.0"
