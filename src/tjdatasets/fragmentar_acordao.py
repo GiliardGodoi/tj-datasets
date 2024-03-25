@@ -39,7 +39,7 @@ patterns_relator = [re.compile(pattern, flags=re.M | re.I) for pattern in patter
 
 PATTERN_REMOVE_EXTRA_SPACE = re.compile(r'\s+')
 
-PATTERN_REMOVE_SPECIAL_CHARS = re.compile(r"[\[\]—\*\(\)\\/?+\-]+")
+PATTERN_REMOVE_SPECIAL_CHARS = re.compile(r"[\[\]—\*]+")
 
 PATTERN_REMOVE_HEADER_NOISE = r'(?:poder.*?judiciario.*?tribunal.*?justica|tribunal.*?justica.*?poder.*?judiciario)(?:.*?estado)?(?:.*?sao.*?paulo)?'
 
@@ -106,7 +106,12 @@ def identifica_decisao(text):
 
     return result
 
-def identifica_voto_relator(text, relator : Result, page_sep='\x0c'):
+def identifica_voto_relator(text, relator : Result, 
+                            page_sep='\x0c', 
+                            clean_chars=re.compile(r"[\[\]—\*\(\)\\/?+]+")):
+    
+    text = re.sub(clean_chars, ' ', text)
+
     result = None
     if (relator is None) or (relator.rule < 0):
         pages = text.split(page_sep) # bad smell
@@ -120,6 +125,7 @@ def identifica_voto_relator(text, relator : Result, page_sep='\x0c'):
         return result
 
     nome = relator.text.strip()
+    nome = re.sub(clean_chars, ' ', nome)
     primeiro_caso = nome.strip()[::-1]
     primeiro_caso = r'[\w\s]*?'.join(primeiro_caso.split())
 
