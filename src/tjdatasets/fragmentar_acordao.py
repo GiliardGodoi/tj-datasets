@@ -25,27 +25,31 @@ def find_by_rules(text, patterns):
     return result
 
 patterns_relator = [
-    r"de\s+\w+\s+de\s+\d{4}\W+(\D+)\s+relatora?\s+assinatura\s+eletr.nica",
-    r"de\s+\w+\s+de\s+\d{4}\W+(\D+)\s+relatora?\s+assinatura",
-    r"de\s+\w+\s+de\s+\d{4}\W+assinatura eletr.nica\W+(\D+)\s+relatora?",
-    r"de\s+\w+\s+de\s+\d{4}\W+assinatura digital\W+(\D+)\s+desembargadora?",
-    r"de\s+\w+\s+de\s+\d{4}\W+assinatura digital\W+(\D+)\s+relatora?",
-    r"de\s+\w+\s+de\s+\d{4}\W+(\D+)\s+relatora?",
-    r"de\s+\w+\s+de\s+\d{4}\W+(\D+)\s\W+relatora?",
-    r"de\s+\w+\s+de\s+\d{4}\W+(\D+)\s?\W+assinado\s+digitalmente",
-    r"de\s+\w+\s+de\s+\d{4}\W+(\D+)\s?\W+assinatura\seletr.nica",
-    r"de\s+\w+\s+de\s+\d{4}\W+(\D+)\s?\W+assinatura",
-    r"s.o\s*paulo,\s+\d{1,2}\s+de\s+\w+\s+de\s+\d{4}.*?(\w+\s*\w+).*?relator",
-
-    r'data\s+do\s+julgamento\s+por\s+extenso\s+n.o\s+informado\W+(\D+)\s+relatora?\s+assinatura\s+eletr.nica',
-    r'data\s+do\s+julgamento\s+por\s+extenso\s+n.o\s+informado\W+(\D+)\s+relatora?',
+    r'data\s+do\s+julgamento\s+por\s+extenso\s+n.o\s+informado\W+([\w\s\.\']+?)(?:\s+desembargador.)?\W+relator',
+    r"de[\s\w]+de\s+\d{4}\W+(?:assinatura\s+eletr.nica|assinatura\s+digital)?\W*([\w\s\.\']{5,50}?)\W+(?:relator.|desembargador.|presidente|assinatura\s+eletr.nica|assinatura\s+digital)",
+    r"de\s+\w+\s+de\s+\d{4}\W+([\w\s\.\']{5,50}?)\W+(?:relator.|desembargador.|presidente|assinatura\s+eletr.nica|assinatura\s+digital)",
+    r"de\s+\w+\s+de\s+\d{4}\W+([\w\s\.\'\-]+)\D+relatora?",
+    r"de\s+\w+\s+de\s+\d{4}\W+([\w\s\.\']+)relatora?",
+    r"s.o\s*paulo,\s+\d{1,2}\s+de\s+\w+\s+de\s+\d{4}\W*(\w+\s*\w+).*?relator",
+    r'data\s+do\s+julgamento\s+por\s+extenso\s+n.o\s+informado\W+([\w\s\.\']+)\D+relatora?',
+    r"de[\s\w]+de\s+\d{4}\W+(\w+\s+\w+)",
 ]
 
 patterns_relator = [re.compile(pattern, flags=re.M | re.I) for pattern in patterns_relator ]
 
-def identifica_nome_relator(text, page_sep='\x0c'):
+PATTERN_REMOVE_EXTRA_SPACE = re.compile(r'\s+')
+
+PATTERN_REMOVE_SPECIAL_CHARS = re.compile(r"[\[\]—\*]")
+
+PATTERN_REMOVE_HEADER_NOISE = r'(?:poder.*?judiciario.*?tribunal.*?justica|tribunal.*?justica.*?poder.*?judiciario)(?:.*?estado)?(?:.*?sao.*?paulo)?'
+
+PATTERN_REMOVE_SMALL_WORDS = r'\b\w{1,2}\b'
+
+PATTERN_REMOVE_NUMBER = r'\b[\d]+\b'
+
+def identifica_nome_relator(text, patterns=patterns_relator, page_sep='\x0c'):
     result = None
-    re_match, rule_id = find_by_rules(text, patterns=patterns_relator)
+    re_match, rule_id = find_by_rules(text, patterns=patterns)
     if rule_id == -1 :
         result = Result(
             name='nome_relator',
@@ -54,9 +58,14 @@ def identifica_nome_relator(text, page_sep='\x0c'):
         )
     else:
         nome_relator = re_match.group(1)
-        nome_relator = re.sub(r"\s+\(.+\)?", '', nome_relator, flags=re.I)
-        nome_relator = re.sub(r"presidente\s+e", '', nome_relator, flags=re.I)
-        nome_relator = nome_relator.strip('\n').strip()
+        
+        if len(nome_relator) > 50 :
+            nome_relator = re.sub(PATTERN_REMOVE_HEADER_NOISE, ' ', nome_relator)
+            nome_relator = re.sub(PATTERN_REMOVE_NUMBER, ' ', nome_relator)
+            nome_relator = re.sub(PATTERN_REMOVE_SMALL_WORDS, ' ', nome_relator)
+
+        nome_relator = re.sub(PATTERN_REMOVE_EXTRA_SPACE, ' ', nome_relator)
+        nome_relator = nome_relator.strip()
 
         result = Result(
             name='nome_relator',
@@ -69,9 +78,10 @@ def identifica_nome_relator(text, page_sep='\x0c'):
     return result
 
 pattern_decisao_acordao = [
+    r'decisao:?([\S\s]*?)\s+(?:o\s+)?julgamento\s+teve',
+    r'decisao:?(\D*?)\s+(?:o\s+)?julgamento\s+teve',
     r"decisao:?(\D*?)\so\s+julgamento\s+teve",
-    r"decisao:?(\D*?)\sjulgamento\s+teve",
-    r"decisao:?([\S\s]*?)\so?\s+julgamento teve",
+    r"decisao:?(\D*?)\sjulgamento\s+teve"
 ]
 
 pattern_decisao_acordao = [ re.compile(p, flags=re.M|re.I) for p in pattern_decisao_acordao ]
@@ -110,29 +120,24 @@ def identifica_voto_relator(text, relator : Result, page_sep='\x0c'):
         )
         return result
 
-    nome = relator.text.strip().lower()[::-1]
-    nome_relator = r'\s*?'.join(nome.split())
-    # considera o caso em que pode haver espaços entre as letras
-    # que compõe o nome do relator
-    nome_relator_2 = r'[\W\w]*?'.join([
-       '\s*'.join(list(n)) for n in nome.split()
+    nome = relator.text.strip()
+    primeiro_caso = nome.strip()[::-1]
+    primeiro_caso = r'[\w\s]*?'.join(primeiro_caso.split())
+
+    # segundo caso considera que pode haver espaço inadvertidos 
+    # entre as letras de um nome ENI O
+    segundo_caso = nome.strip()[::-1]
+    segundo_caso = r'[\W\w]*?'.join([
+       r'\s*'.join(list(n)) for n in segundo_caso.split()
     ])
 
     inv_pattern_ultimo_nome_relator = [
-        rf'.dangised\s*?a?rotaler\s*?{nome_relator}', # {nome_relator} relatora? designad.
-        rf'a?rotaler\s*?{nome_relator}', # {nome_relator} relatora?
-        rf'a?rotaler\s*?\.?sed\s*?{nome_relator}', # {nome_relator} des relatora?
-        rf'odavirp\s*?otierid\s*?ed\s*?o..es\s*?ad\s*?etnediserp\s*?{nome_relator}',
-        # {nome_relator} presidente da secaoo de direito privado
+        rf'a?rotaler(?:\s+a?rodagrabmesed|\s+\.?sed)?[\w\s]*?{primeiro_caso}',
+        rf'odavirp\s*?otierid\s*?ed\s*?o..es\s*?ad\s*?etnediserp[\w\s]*?{primeiro_caso}',
 
-        rf'a?rotaler\s*?{nome_relator_2}',
-        rf'a?rotaler\s*?\.?sed\s*?{nome_relator_2}',
-        rf'.dangised\s*?a?rotaler\s*?{nome_relator_2}',
-        rf'odavirp\s*?otierid\s*?ed\s*?o..es\s*?ad\s*?etnediserp\s*?{nome_relator_2}',
-        rf'{nome_relator_2}',
-
-        rf'a?rotaler[\W\w]*?{nome_relator_2}',
-]
+        rf'a?rotaler(?:\s+a?rodagrabmesed|\s+\.?sed)?[\w\s]*?{segundo_caso}',
+        rf'odavirp\s*?otierid\s*?ed\s*?o..es\s*?ad\s*?etnediserp[\w\s]*?{segundo_caso}'
+    ]
 
     inv_text = text[::-1]
     for rule_id, pattern in enumerate(inv_pattern_ultimo_nome_relator, start=1):
