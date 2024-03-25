@@ -39,7 +39,7 @@ patterns_relator = [re.compile(pattern, flags=re.M | re.I) for pattern in patter
 
 PATTERN_REMOVE_EXTRA_SPACE = re.compile(r'\s+')
 
-PATTERN_REMOVE_SPECIAL_CHARS = re.compile(r"[\[\]—\*]")
+PATTERN_REMOVE_SPECIAL_CHARS = re.compile(r"[\[\]—\*\(\)\\/?+\-]+")
 
 PATTERN_REMOVE_HEADER_NOISE = r'(?:poder.*?judiciario.*?tribunal.*?justica|tribunal.*?justica.*?poder.*?judiciario)(?:.*?estado)?(?:.*?sao.*?paulo)?'
 
@@ -78,10 +78,9 @@ def identifica_nome_relator(text, patterns=patterns_relator, page_sep='\x0c'):
     return result
 
 pattern_decisao_acordao = [
-    r'decisao:?([\S\s]*?)\s+(?:o\s+)?julgamento\s+teve',
-    r'decisao:?(\D*?)\s+(?:o\s+)?julgamento\s+teve',
-    r"decisao:?(\D*?)\so\s+julgamento\s+teve",
-    r"decisao:?(\D*?)\sjulgamento\s+teve"
+    r"decisao\s?:?([\W\w]+?)\s+?(?:o\s*|\d\s*)?julgamento\W+teve",
+    r"decisao\s?:?([\W\w]+?)\s+(?:o\s*)?julgamento",
+    r"nte\s[decisao\s-]{7,9}:?([\W\w]+?)\s+?(?:o\s*|\d\s*)?[julgamento\s-]{10,12}\W+teve",
 ]
 
 pattern_decisao_acordao = [ re.compile(p, flags=re.M|re.I) for p in pattern_decisao_acordao ]
