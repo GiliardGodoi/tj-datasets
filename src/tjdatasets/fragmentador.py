@@ -1,3 +1,12 @@
+'''
+# Fragmentador
+
+Módulo reponsável por fazer a divisão de um acórdão em:
+    - voto do relator
+    - relatório
+    - fundamento decisão
+    - declaração de voto divergente 
+'''
 import re
 from dataclasses import dataclass
 
