@@ -1,9 +1,12 @@
-# import string
+import re
 
 # DEFAULT_PUNCTUATION = string.punctuation + '—”“ªº°'
 # DEFAULT_PUNCTUATION = '!"#$%&\'()*+,-./:;<=>?@[\]^`{|}~' + '—”“ªº°'
 DEFAULT_PUNCTUATION = '!"#$%&\'()*+,-./:;<=>?@[\]^`{|}~—”“ªº°'
 
+PATTERN_REMOVE_EXTRA_SPACE = re.compile(r'\s+')
+PATTERN_REMOVE_SPECIAL_CHARS = re.compile(r"[\[\]—\*]+")
+TABLE_REMOVE_LOWER_ACCENTS = str.maketrans('áàãâäéèêëóòõôöíìîïúùüç', 'aaaaaeeeeoooooiiiiuuuc')
 
 ## https://www.stj.jus.br/docs_internet/revista/eletronica/stj-revista-eletronica-2021_263_2_capAbreviaturaseSiglas.pdf
 STANDART_EXPRESSIONS = {
@@ -237,3 +240,27 @@ JUR_STOPWORDS = {
 }
 
 CUSTO_STOPWORDS = STOP_WORDS_SPACY.union(JUR_STOPWORDS)
+
+# Movimento temas
+MOVS_TEMAS = {
+  "85721" : "S1039",
+  "85738" : "S1101",
+  "85714" : "S1033",
+  "85696" : "S1015",
+  "85568" : "S0929",
+  "80355" : "0381",
+  "85556" : "S0744",
+  "80551" : "0837",
+  "85609" : "S0948",
+  "85629" : "S0958",
+  "80718" : "1011",
+  "85697" : "S1016",
+  "85755" : "S1069",
+  "80822" : "1127",
+  "85820" : "S1137"
+}
+
+STR_MOVS_CODE = "85721;85738;85714;85696;85568;80355;85556;80551;85609;85629;80718;85697;85755;80822;85820"
+MOVS_CODE = STR_MOVS_CODE.split(';')
+
+TEMAS_MOVS = {v: k for k, v in MOVS_TEMAS.items()}
