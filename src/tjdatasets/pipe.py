@@ -1,4 +1,3 @@
-import re
 import pandas as pd
 
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -8,43 +7,52 @@ from .preprocessing import (
     remove_header, 
     remove_footer,
     remove_punctuation,
-    remove_word_stress,
-    # remove_stopwords,
-    # remove_short_words,
-    remove_short_and_stop_words,
     regularize_expressions,
-    # tokenizer,
-    # regex_tokenizer,
-    # lemmatize,
-    # stemmerize,
+    remove_special_case_words,
 )
 
-from .utils import (JUR_EXPRESSIONS, 
-                    LEG_EXPRESSIONS, 
-                    DEFAULT_PUNCTUATION,
-                    STOP_WORDS_SPACY)
+from .utils import (CUSTO_STOPWORDS,
+                    STANDART_EXPRESSIONS,
+                    PATTERN_REMOVE_EXTRA_SPACE,
+                    TABLE_REMOVE_LOWER_ACCENTS,
+                    DEFAULT_PUNCTUATION)
 
-class PreprocessamentoLimpo(BaseEstimator, TransformerMixin):
+class PreProcessamentoLimpo(BaseEstimator, TransformerMixin):
+  '''Pré-processamento Limpo
+
+  Converte o texto para o formato 'Limpo'
+
+  São aplicadas as seguintes operações:
+    - Remove ruído do cabeçalho e rodapé
+    - Remove cabeçalho
+    - Remove rodapé
+    - Remove caracteres em branco duplos (espaços em branco)
+    - Remove caracteres em branco do início e fim do documento (.strip)
+
   
-  def __init__(self, content='conteudo'):
+  Recebe como parâmetro um pandas DataFrame ou um pandas Series. 
+
+  Retorna um pandas Series com os documentos (textos) formatados.
+  '''
+  
+  def __init__(self, column_text='conteudo'):
     '''Inicializa a classe.
 
     Parâmetros:
-      target: define a coluna alvo, que contém os documentos a serem processados.
-      transformed: define a coluna que será gerada
+      column_text: quando um pd.DataFrame é passado como entrada, define a coluna alvo que contém os documentos a serem processados.
     '''
-    self.content = content
+    self.column_text = column_text
 
   def fit(self, X, y=None):
     return self
   
   def transform(self, X):
-    '''
-    '''
+    '''Aplica as operações para conversão do texto para o formato Limpo'''
+
     if type(X) is pd.Series:
       documents = X
     elif type(X) is pd.DataFrame:
-      documents = X[self.content]
+      documents = X[self.column_text]
     else:
       raise TypeError(f'Expected pd.Series or pd.DataFrame, but received {type(X)}')
 
@@ -52,23 +60,44 @@ class PreprocessamentoLimpo(BaseEstimator, TransformerMixin):
               .apply(remove_noise_from_header)
               .apply(remove_header)
               .apply(remove_footer)
-              .apply(lambda t: re.sub(r'\x0c', '', t)) # remove caracter de quebra de linha
-              .apply(lambda t: re.sub(r'\s+', ' ', t)) # remove caracteres em branco
-              .apply(lambda t: t.strip()) # remove espaço em branco no começo e no final do texto
+              .str.replace(PATTERN_REMOVE_EXTRA_SPACE, ' ', regex=True) # substituí caracteres em branco duplos por um espaço simples, inclusive quebra de página \x0c
+              .str.strip() # remove espaço em branco no começo e no final do texto
               )
 
     return result
 
-class PreprocessamentoNormalizado(BaseEstimator, TransformerMixin):
+class PreProcessamentoNormalizado(BaseEstimator, TransformerMixin):
+  '''Pré-processamento Normalizado
+
+  Converte o texto para o formato 'Normalizado'
+
+  São aplicadas as seguintes operações:
+    - Remove ruído do cabeçalho e rodapé
+    - Remove cabeçalho
+    - Remove rodapé
+    - Remove caracteres em branco duplos (espaços em branco)
+    - Converte para letras minúsculas
+    - Remove o acento das palavras
+    - Regulariza expressões    (definidas em STANDART_EXPRESSIONS)
+    - Remove pontuação gráfica (definidas em  DEFAULT_PUNCTUATION)
+
   
-  def __init__(self, content='conteudo'):
+  Recebe como parâmetro um pandas DataFrame ou um pandas Series. 
+
+  Retorna um pandas Series com os documentos (textos) formatados.
+  '''
+  
+  def __init__(self, column_text='formatado'):
     '''Inicializa a classe.
 
     Parâmetros:
-      target: define a coluna alvo, que contém os documentos a serem processados.
-      transformed: define a coluna que será gerada
+      column_text: quando um pd.DataFrame é passado como entrada, define a coluna alvo que contém os documentos a serem processados.
     '''
-    self.content = content
+    self.column_text = column_text
+
+    self.words_do_not_remove = {'nao', 'lei', 'ato', 
+                                'reu', 'mes', 'ano', 
+                                'dia', 'reu', 'quo', 'jus'}
 
   def fit(self, X, y=None):
     return self
@@ -79,7 +108,7 @@ class PreprocessamentoNormalizado(BaseEstimator, TransformerMixin):
     if type(X) is pd.Series:
       documents = X
     elif type(X) is pd.DataFrame:
-      documents = X[self.content]
+      documents = X[self.column_text]
     else:
       raise TypeError(f'Expected pd.Series or pd.DataFrame, but received {type(X)}')
 
@@ -87,15 +116,16 @@ class PreprocessamentoNormalizado(BaseEstimator, TransformerMixin):
               .apply(remove_noise_from_header)
               .apply(remove_header)
               .apply(remove_footer)
-              .apply(lambda t: re.sub(r'\x0c', '', t)) # remove caracter de quebra de linha
-              .apply(lambda t: re.sub(r'\s+', ' ', t)) # remove caracteres em branco
-              .apply(lambda t: t.strip()) # remove espaço em branco no começo e no final do texto
-              .apply(regularize_expressions, mapper=LEG_EXPRESSIONS)
-              .apply(regularize_expressions, mapper=JUR_EXPRESSIONS)
-              .apply(lambda t: t.lower()) # transforma as palavras em minusculas
-              .apply(remove_word_stress)
+              .str.replace(PATTERN_REMOVE_EXTRA_SPACE, ' ', regex=True) # substituí caracteres em branco duplos por um espaço simples, inclusive quebra de página \x0c
+              .str.lower()
+              .str.translate(TABLE_REMOVE_LOWER_ACCENTS)
+              .apply(regularize_expressions, mapper=STANDART_EXPRESSIONS)
               .apply(remove_punctuation, punctuation=DEFAULT_PUNCTUATION)
-              .apply(remove_short_and_stop_words, stopwords=STOP_WORDS_SPACY, min_length=3)
-              )
+              .apply(remove_special_case_words, 
+                     stopwords=CUSTO_STOPWORDS, 
+                     spare_words=self.words_do_not_remove, 
+                     min_length=3)
+              .str.strip() # remove espaço em branco no começo e no final do texto
+            )
 
     return result
