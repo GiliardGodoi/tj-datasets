@@ -7,6 +7,8 @@ DEFAULT_PUNCTUATION = '!"#$%&\'()*+,-./:;<=>?@[\]^`{|}~—”“ªº°'
 PATTERN_REMOVE_EXTRA_SPACE = re.compile(r'\s+')
 PATTERN_REMOVE_SPECIAL_CHARS = re.compile(r"[\[\]—\*]+")
 TABLE_REMOVE_LOWER_ACCENTS = str.maketrans('áàãâäéèêëóòõôöíìîïúùüç', 'aaaaaeeeeoooooiiiiuuuc')
+TABLE_REMOVE_UPPER_ACCENTS = str.maketrans('ÁÀÃÂÄÉÈÊËÓÒÕÔÖÍÌÎÏÚÙÜÇ', 'AAAAAEEEEOOOOOIIIIUUUC')
+TABLE_REMOVE_ACCENTS = str.maketrans('áàãâäéèêëóòõôöíìîïúùüçÁÀÃÂÄÉÈÊËÓÒÕÔÖÍÌÎÏÚÙÜÇ', 'aaaaaeeeeoooooiiiiuuucAAAAAEEEEOOOOOIIIIUUUC')
 
 ## https://www.stj.jus.br/docs_internet/revista/eletronica/stj-revista-eletronica-2021_263_2_capAbreviaturaseSiglas.pdf
 STANDART_EXPRESSIONS = {
