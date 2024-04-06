@@ -2,6 +2,15 @@ import pandas as pd
 
 from sklearn.base import BaseEstimator, TransformerMixin
 
+from .fragmentador import (
+  identifica_nome_relator,
+  identifica_decisao,
+  identifica_voto_relator,
+  identifica_relatorio_voto,
+  identifica_fundamentacao_voto,
+  identifica_voto_divergente,
+)
+
 from .preprocessing import (
     remove_noise_from_header, 
     remove_header, 
@@ -96,7 +105,7 @@ class PreProcessamentoNormalizado(BaseEstimator, TransformerMixin):
   Retorna um pandas Series com os documentos (textos) formatados.
   '''
   
-  def __init__(self, column_text='formatado'):
+  def __init__(self, column_text='conteudo'):
     '''Inicializa a classe.
 
     Parâmetros:
@@ -133,3 +142,52 @@ class PreProcessamentoNormalizado(BaseEstimator, TransformerMixin):
             )
 
     return result
+
+def _get_fragmento(texto):
+
+  relator = identifica_nome_relator(texto)
+  # decisao = identifica_decisao(texto)
+  voto    = identifica_voto_relator(texto, relator)
+  relatorio = identifica_relatorio_voto(texto, voto)
+  fundamentacao = identifica_fundamentacao_voto(texto, voto, relatorio)
+
+  # por padrão, retorna o texto completo do documento
+  texto_resposta = texto 
+
+  # em caso de sucesso rule > 0
+  if fundamentacao.rule > 0 :
+      texto_resposta = fundamentacao.text
+  elif voto.rule > 0 :
+      texto_resposta = voto.text
+  
+  return texto_resposta
+
+class ProcessamentoFragmentador(BaseEstimator, TransformerMixin):
+  
+  def __init__(self, 
+               column_text='formatado',
+               as_dataframe=False):
+    '''Inicializa a classe.
+
+    Parâmetros:
+      column_text: quando um pd.DataFrame é passado como entrada, define a coluna que contém os documentos a serem processados.
+    '''
+    self.column_text = column_text
+    self.as_dataframe = as_dataframe
+
+  def fit(self, X, y=None):
+    return self
+  
+  def transform(self, X):
+    '''
+    '''
+    documents = _check_input_type(X, self.column_text)
+
+    documents = (documents.str.replace(PATTERN_REMOVE_SPECIAL_CHARS, ' ', regex=True)
+                          .str.replace(PATTERN_REMOVE_EXTRA_SPACE, ' ', regex=True)
+                          .str.lower()
+                          .str.translate(TABLE_REMOVE_LOWER_ACCENTS) )
+    
+    results = documents.apply(_get_fragmento)
+
+    return results
