@@ -105,7 +105,7 @@ class PreProcessamentoNormalizado(BaseEstimator, TransformerMixin):
   Retorna um pandas Series com os documentos (textos) formatados.
   '''
   
-  def __init__(self, column_text='conteudo'):
+  def __init__(self, column_text='formatado'):
     '''Inicializa a classe.
 
     Parâmetros:
@@ -126,10 +126,6 @@ class PreProcessamentoNormalizado(BaseEstimator, TransformerMixin):
     documents = _check_input_type(X, self.column_text)
 
     result = (documents
-              .apply(remove_noise_from_header)
-              .apply(remove_header)
-              .apply(remove_footer)
-              .str.replace(PATTERN_REMOVE_EXTRA_SPACE, ' ', regex=True) # substituí caracteres em branco duplos por um espaço simples, inclusive quebra de página \x0c
               .str.lower()
               .str.translate(TABLE_REMOVE_LOWER_ACCENTS)
               .apply(regularize_expressions, mapper=STANDART_EXPRESSIONS)
