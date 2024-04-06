@@ -1,4 +1,7 @@
+import pandas as pd
 import re
+
+from pathlib import Path
 
 # DEFAULT_PUNCTUATION = string.punctuation + '—”“ªº°'
 # DEFAULT_PUNCTUATION = '!"#$%&\'()*+,-./:;<=>?@[\]^`{|}~' + '—”“ªº°'
@@ -266,3 +269,28 @@ STR_MOVS_CODE = "85721;85738;85714;85696;85568;80355;85556;80551;85609;85629;807
 MOVS_CODE = STR_MOVS_CODE.split(';')
 
 TEMAS_MOVS = {v: k for k, v in MOVS_TEMAS.items()}
+
+
+def define_label_column(df : pd.DataFrame, 
+                        column_codes='codigos_movimentos_temas', 
+                        column_label='temas',
+                        sep=';'):
+
+    codes_as_list = df[column_codes].str.split(sep)
+    condition = lambda code : code in MOVS_TEMAS
+    selected_codes = codes_as_list.apply(lambda codes : list(filter(condition, codes)))
+    df[column_label] = selected_codes.apply(lambda codes : [MOVS_TEMAS[c] for c in codes]).apply(tuple)
+
+    return df
+
+def save_as_parquet(df : pd.DataFrame, filepath : Path):
+    ''' Auxiliary function to save dataframe with parquet extension.
+
+    `.to_parquet` method requeries columns names as strings.
+    However, after the vectorization, it's build a dataframe where
+    the columns names are integers, ranging from 0 to `max_features - 1`.
+    Then, to fix that, we map the columns names with `.rename`.
+    The dict comprehension builds a map between the olds names and the new ones.
+    '''
+    df.rename(columns={ k : str(k) for k in df.columns}, inplace=True)
+    df.to_parquet(filepath, compression='gzip', index=False)
