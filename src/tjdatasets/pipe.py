@@ -172,7 +172,7 @@ def _get_fragmento(texto):
 class ProcessamentoFragmentador(BaseEstimator, TransformerMixin):
   
   def __init__(self, 
-               column_text='formatado',
+               column_text='conteudo',
                as_dataframe=False):
     '''Inicializa a classe.
 
