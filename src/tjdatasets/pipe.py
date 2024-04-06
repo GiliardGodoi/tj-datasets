@@ -91,8 +91,6 @@ class PreProcessamentoNormalizado(BaseEstimator, TransformerMixin):
         - palavras com comprimento mínimo ou menor (min_length é definido por padrão como 3)
         - Porém tenta preservar algumas palavras definidas em words_do_not_remove
 
-
-  
   Recebe como parâmetro um pandas DataFrame ou um pandas Series. 
 
   Retorna um pandas Series com os documentos (textos) formatados.
