@@ -11,11 +11,22 @@ from .preprocessing import (
     remove_special_case_words,
 )
 
-from .utils import (CUSTO_STOPWORDS,
-                    STANDART_EXPRESSIONS,
+from .utils import (CUSTO_STOPWORDS, 
+                    DEFAULT_PUNCTUATION,
                     PATTERN_REMOVE_EXTRA_SPACE,
-                    TABLE_REMOVE_LOWER_ACCENTS,
-                    DEFAULT_PUNCTUATION)
+                    PATTERN_REMOVE_SPECIAL_CHARS,
+                    STANDART_EXPRESSIONS,
+                    TABLE_REMOVE_LOWER_ACCENTS)
+
+def _check_input_type(X, column_text) -> pd.Series:
+  if type(X) is pd.Series:
+      documents = X
+  elif type(X) is pd.DataFrame:
+    documents = X[column_text]
+  else:
+    raise TypeError(f'Expected pd.Series or pd.DataFrame, but received {type(X)}')
+  
+  return documents
 
 class PreProcessamentoLimpo(BaseEstimator, TransformerMixin):
   '''Pré-processamento Limpo
@@ -39,7 +50,7 @@ class PreProcessamentoLimpo(BaseEstimator, TransformerMixin):
     '''Inicializa a classe.
 
     Parâmetros:
-      column_text: quando um pd.DataFrame é passado como entrada, define a coluna alvo que contém os documentos a serem processados.
+      column_text: quando um pd.DataFrame é passado como entrada, define a coluna que contém os documentos a serem processados.
     '''
     self.column_text = column_text
 
@@ -49,12 +60,7 @@ class PreProcessamentoLimpo(BaseEstimator, TransformerMixin):
   def transform(self, X):
     '''Aplica as operações para conversão do texto para o formato Limpo'''
 
-    if type(X) is pd.Series:
-      documents = X
-    elif type(X) is pd.DataFrame:
-      documents = X[self.column_text]
-    else:
-      raise TypeError(f'Expected pd.Series or pd.DataFrame, but received {type(X)}')
+    documents = _check_input_type(X, self.column_text)
 
     result = (documents
               .apply(remove_noise_from_header)
@@ -80,6 +86,11 @@ class PreProcessamentoNormalizado(BaseEstimator, TransformerMixin):
     - Remove o acento das palavras
     - Regulariza expressões    (definidas em STANDART_EXPRESSIONS)
     - Remove pontuação gráfica (definidas em  DEFAULT_PUNCTUATION)
+    - Remove alguns casos especiais de palavras:
+        - stopwords
+        - palavras com comprimento mínimo ou menor (min_length é definido por padrão como 3)
+        - Porém tenta preservar algumas palavras definidas em words_do_not_remove
+
 
   
   Recebe como parâmetro um pandas DataFrame ou um pandas Series. 
@@ -91,7 +102,7 @@ class PreProcessamentoNormalizado(BaseEstimator, TransformerMixin):
     '''Inicializa a classe.
 
     Parâmetros:
-      column_text: quando um pd.DataFrame é passado como entrada, define a coluna alvo que contém os documentos a serem processados.
+      column_text: quando um pd.DataFrame é passado como entrada, define a coluna que contém os documentos a serem processados.
     '''
     self.column_text = column_text
 
@@ -105,12 +116,7 @@ class PreProcessamentoNormalizado(BaseEstimator, TransformerMixin):
   def transform(self, X):
     '''
     '''
-    if type(X) is pd.Series:
-      documents = X
-    elif type(X) is pd.DataFrame:
-      documents = X[self.column_text]
-    else:
-      raise TypeError(f'Expected pd.Series or pd.DataFrame, but received {type(X)}')
+    documents = _check_input_type(X, self.column_text)
 
     result = (documents
               .apply(remove_noise_from_header)
