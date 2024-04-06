@@ -146,21 +146,28 @@ class PreProcessamentoNormalizado(BaseEstimator, TransformerMixin):
 def _get_fragmento(texto):
 
   relator = identifica_nome_relator(texto)
-  # decisao = identifica_decisao(texto)
   voto    = identifica_voto_relator(texto, relator)
   relatorio = identifica_relatorio_voto(texto, voto)
   fundamentacao = identifica_fundamentacao_voto(texto, voto, relatorio)
 
   # por padrão, retorna o texto completo do documento
-  texto_resposta = texto 
+  fragmento_texto = texto
+  fragmento_nome  = 'conteudo_original'
+  fragmento_span  = (0, len(texto))
 
   # em caso de sucesso rule > 0
   if fundamentacao.rule > 0 :
-      texto_resposta = fundamentacao.text
+      fragmento_texto = fundamentacao.text
+      fragmento_nome  = fundamentacao.name
+      fragmento_span  = fundamentacao.span
   elif voto.rule > 0 :
-      texto_resposta = voto.text
-  
-  return texto_resposta
+      fragmento_texto = voto.text
+      fragmento_nome  = voto.name
+      fragmento_span  = voto.span
+
+  return {'texto' : fragmento_texto, 
+          'fragmento_nome' : fragmento_nome, 
+          'fragmento_span' : fragmento_span }
 
 class ProcessamentoFragmentador(BaseEstimator, TransformerMixin):
   
@@ -188,6 +195,12 @@ class ProcessamentoFragmentador(BaseEstimator, TransformerMixin):
                           .str.lower()
                           .str.translate(TABLE_REMOVE_LOWER_ACCENTS) )
     
-    results = documents.apply(_get_fragmento)
+    results = (documents
+               .apply(_get_fragmento)
+               .apply(pd.Series)
+               )
+    
+    if not self.as_dataframe:
+      results = results['texto']
 
     return results
