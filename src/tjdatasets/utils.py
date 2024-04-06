@@ -194,7 +194,7 @@ STANDART_EXPRESSIONS = {
     r'\d+$' : r'_numero_'
 }
 
-
+# https://github.com/explosion/spaCy/blob/master/spacy/lang/pt/stop_words.py
 STOP_WORDS_SPACY = {
     'a', 'acerca', 'ademais', 'adeus', 'agora', 'ainda', 'algo', 'algumas', 'alguns', 'ali', 'além', 
     'ambas', 'ambos', 'antes', 'ao', 'aos', 'apenas', 'apoia', 'apoio', 'apontar', 'após', 'aquela', 
