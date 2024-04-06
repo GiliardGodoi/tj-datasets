@@ -161,7 +161,7 @@ STANDART_EXPRESSIONS = {
     r'(\W+)sta(\W+)' : r'\g<1>suspensao_de_tutela_antecipada\g<2>',
     r'(\W+)tr(\W+)' : r'\g<1>trabalho\g<2>',
     r'(\W+)trbt(\W+)' : r'\g<1>tributario\g<2>',
-    r'http\S+' : r'_URL_',
+    r'http\S+' : r'_url_',
 
     # Tipos de Legislação
     r"(lei)\s+(?:n[\.º°]{0,2}\s+)?([\d\/\.-]+)" : r"\g<1>_\g<2>",
@@ -174,18 +174,18 @@ STANDART_EXPRESSIONS = {
     r"(portaria)\s+(?:n[\.º°]{0,2}\s+)?([\d\/\.-]+)" : r"\g<1>_\g<2>",
     r"(s(?:ú|u)mula)\s+(?:n[\.º°]{0,2}\s+)?([\d\/\.-]+)" : r"\g<1>_\g<2>",
     r"(s(?:ú|u)mula)\s+(vinculante)\s+(?:n[\.º°]{0,2}\s+)?([\d\/\.-]+)" : r"\g<1>_\g<2>_\g<3>",
-    r"voto\s+(?:n[\.º°]{0,2}\s+)?([\d\.\/-]+)" : r"_REGISTRO_VOTO_",
+    r"voto\s+(?:n[\.º°]{0,2}\s+)?([\d\.\/-]+)" : r"_registro_juridico_",
     r"medida\s+provis(?:ó|o)ria\s+(?:n[\.º°]{0,2}\s+)?([\d\/\.-]+)" : r"medida_provisoria_\g<1>",
     r"mp\s+(?:n[\.º°]{0,2}\s+)?([\d\/\.-]+)" : r"medida_provisoria_\g<1>",
     
     # Processo 
-    r"\d{7}-\d{2}\.\d{4}\.\d{1}\.\d{2}\.\d{4}" : r"_REGISTRO_JURIDICO_", # Possível formato para número de processo
-    r"registro:?\s*?\d{1,4}\.\d{5,10}" : r"_REGISTRO_JURIDICO_",  # Possível formato para código de registro
-    r"R\$\s{0,1}[\d\,\.]+" : r"_VALOR_MONETARIO_", # Possível formato de dinheiro (real)
-    r"\d{1,2}[\.\/]\d{1,2}[\.\/]\d{2,4}" : r"_DATA_", # Possível formato de data
+    r"\d{7}-\d{2}\.\d{4}\.\d{1}\.\d{2}\.\d{4}" : r"_registro_juridico_", # Possível formato para número de processo
+    r"registro:?\s*?\d{1,4}\.\d{5,10}" : r"_registro_juridico_",  # Possível formato para código de registro
+    r"R\$\s{0,1}[\d\,\.]+" : r"_valor_monetario_", # Possível formato de dinheiro (real)
+    r"\d{1,2}[\.\/]\d{1,2}[\.\/]\d{2,4}" : r"_data_", # Possível formato de data
     r"(\w+)\/(\w+)" : r"\g<1>_\g<2>",
     r"([a-zA-Z]+)(\d+)" : r"\g<1> \g<2>", # captura qualquer palavra seguida de número e acrescenta um espaço
-    r"[\d\,\.]+\s{0,1}\%" : r"_PORCENTAGEM_",
+    r"[\d\,\.]+\s{0,1}\%" : r"_porcentagem_",
     r"(\d)\.(\d)" : r"\g<1>\g<2>", # Se observar um ponto no meio de dois números, unir os números
 
     # Customizáveis (podem ser retiradas no futuro)
