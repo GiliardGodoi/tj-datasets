@@ -3,9 +3,9 @@ from typing import List
 from nltk.tokenize import word_tokenize, RegexpTokenizer
 from nltk.stem import RSLPStemmer
 
-from .utils import (STOP_WORDS_SPACY, 
-                    JUR_EXPRESSIONS, 
-                    DEFAULT_PUNCTUATION)
+from .utils import (CUSTO_STOPWORDS, 
+                    STANDART_EXPRESSIONS,
+                    DEFAULT_PUNCTUATION, TABLE_REMOVE_LOWER_ACCENTS)
 
 def detect_header(s1, s2, minHeaderLen=15):
     """
@@ -186,7 +186,7 @@ def remove_noise_from_header(text : str) -> str:
     return '\x0c'.join(doc)
 
 
-def remove_stopwords(tokens : List[str], stopwords=STOP_WORDS_SPACY) -> List[str]:
+def remove_stopwords(tokens : List[str], stopwords=CUSTO_STOPWORDS) -> List[str]:
     if not type(tokens) is list:
         raise TypeError(f"tokens should be a list of strings, but received a {type(tokens)}.\nConsider apply a tokenization before.")
     
@@ -202,25 +202,51 @@ def remove_short_words(tokens: List, min_lenght=3) -> List[str]:
     return [token for token in tokens if len(token) > min_lenght]
 
 
-def remove_short_and_stop_words(text: str, stopwords=STOP_WORDS_SPACY, min_length=3):
+def remove_short_and_stop_words(text: str, 
+                                stopwords=CUSTO_STOPWORDS, 
+                                min_length=3,
+                                tokenizer=word_tokenize):
 
     tokens = [
         token
-        for token in word_tokenize(text)
+        for token in tokenizer(text)
         if (len(token) > min_length) and (token not in stopwords)
     ]
 
     return " ".join(tokens)
 
+def remove_special_case_words(text: str,
+                              stopwords: set = CUSTO_STOPWORDS,
+                              spare_words: set = {},
+                              min_length: int = 3,
+                              tokenizer: callable = word_tokenize,
+                              ):
+    ''' Remove tokens (palavras):
+        - menores ou igual a min_length
+        - sejam consideradas stop words
 
-def remove_word_stress(text : str) -> str:
+    Contudo, preserva algumas palavras presente em spare_words.
     '''
-    Remove word stress from lowercasa words.
+    tokens = [
+        token
+        for token in tokenizer(text)
+        if ((len(token) > min_length) and (token not in stopwords)) \
+            or (token in spare_words)
+    ]
+
+    return " ".join(tokens)
+
+def remove_word_stress(text : str, upper_case=False) -> str:
+    '''Remove caracteres com acento.
+
+    Referência: <https://www.w3schools.com/python/ref_string_maketrans.asp>
     '''
-    # https://www.w3schools.com/python/ref_string_maketrans.asp
-    return text.translate(
-            str.maketrans('áàãâäéèêëóòõôöíìîïúùüç', 'aaaaaeeeeoooooiiiiuuuc')
-        )
+    if upper_case:
+        raise NotImplementedError()
+    else :
+        TABLE = TABLE_REMOVE_LOWER_ACCENTS
+    
+    return text.translate(TABLE)
 
 
 def remove_punctuation(text : str, punctuation=DEFAULT_PUNCTUATION) -> str:
@@ -229,7 +255,7 @@ def remove_punctuation(text : str, punctuation=DEFAULT_PUNCTUATION) -> str:
     )
 
 
-def regularize_expressions(text : str, mapper=JUR_EXPRESSIONS) -> str:
+def regularize_expressions(text : str, mapper=STANDART_EXPRESSIONS) -> str:
     for pattern, replace in mapper.items():
         text = re.sub(pattern, replace, text, flags = re.MULTILINE | re.IGNORECASE)
 

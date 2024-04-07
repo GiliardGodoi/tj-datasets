@@ -4,8 +4,24 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tjdatasets"
-version = "0.0.1"
+version = "0.0.3"
 authors = [
     {name="giliard", email="giliard.godoi@gmail.com"}
 ]
-description = "Put a description here!"
+readme = "README.md"
+description = "Text pre-processing utilities for TJ classification project"
+requires-python = ">=3.8"
+dependencies =[
+    "pandas",
+    "scikit-learn",
+    "nltk",
+    "spacy",
+]
+
+[project.optional-dependencies]
+pt-core-news-sm = [
+    "pt-core-news-sm"
+]
+pt-core-news-lg = [
+    "pt_core_news_lg@https://github.com/explosion/spacy-models/releases/download/pt_core_news_lg-3.7.0/pt_core_news_lg-3.7.0-py3-none-any.whl"
+]
