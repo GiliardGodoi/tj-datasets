@@ -138,7 +138,7 @@ class Segmentador(BaseEstimator, TransformerMixin):
         # primeiro separamos o documentos em frases
         # setence_tokenize retorna uma lista de frases
         frame[column_segment] = df['formatado'].apply(sentence_tokenize)
-        # explode transforma cada item da lista uma nova linha
+        # .explode transforma cada item da lista uma nova linha
         # de um novo dataframe
         frame = frame.explode(column_segment)
         frame['contains'] = False
