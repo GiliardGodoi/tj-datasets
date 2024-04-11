@@ -94,7 +94,6 @@ def sentence_tokenize(text):
     return _tokenizer.tokenize(text)
 
 
-
 class Segmentador(BaseEstimator, TransformerMixin):
     '''
     '''
@@ -144,6 +143,6 @@ class Segmentador(BaseEstimator, TransformerMixin):
                     .agg({column_sentence: lambda values: f'{self.sentence_sep}'.join(values)})
                     .loc[True] )
         
-        frame = pd.merge( df['numero_processo'], frame, how='left', left_on='numero_processo', right_index=True)
+        frame = pd.merge(df['numero_processo'], frame, how='left', left_on='numero_processo', right_index=True)
 
         return frame
