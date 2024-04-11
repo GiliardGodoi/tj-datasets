@@ -106,7 +106,7 @@ class Segmentador(BaseEstimator, TransformerMixin):
 
         self.segment_name = segment_name
         self.safe_dtypes = safe_dtypes
-        self.column_sentence = f"segmento_{segment_name}"
+        self.column_segment = f"segmento_{segment_name}"
         self.sentence_sep = sentence_sep
         self.mapping_dtypes = defaultdict(lambda : 'object',  # default
                      numero_processo='category',
@@ -119,7 +119,12 @@ class Segmentador(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, df):
-        column_sentence = self.column_sentence
+        '''
+        '''
+        column_segment = self.column_segment
+
+        # Os tipos das colunas são alterados para efeito de otimização
+        # numero_processo é transformado de string para category, por exemplo
         if self.safe_dtypes:
             columns_dtypes = {column: df[column].dtype for column in df.columns}
             columns_dtypes.update(self.mapping_dtypes)
@@ -129,19 +134,23 @@ class Segmentador(BaseEstimator, TransformerMixin):
         df = df.astype(columns_dtypes)
 
         frame = df[['numero_processo', 'id_documento']].copy()
-        frame[column_sentence] = df['formatado'].apply(sentence_tokenize)
-        frame = frame.explode(column_sentence)
+        # Essa ainda é a parte mais lenta do código
+        # primeiro separamos o documentos em frases
+        # setence_tokenize retorna uma lista de frases
+        frame[column_segment] = df['formatado'].apply(sentence_tokenize)
+        # explode transforma cada item da lista uma nova linha
+        # de um novo dataframe
+        frame = frame.explode(column_segment)
         frame['contains'] = False
-        # for segment in SEGMENT_EXPRESSIONS.keys():
-        #     frame['contains'] = False
 
         for expression in SEGMENT_EXPRESSIONS[self.segment_name]:
-            frame['contains'] = frame['contains'] | frame[column_sentence].str.contains(expression, regex=True, flags=re.I)
+            # pandas, assim como Python, suporta algo chamado short-circuit evaluation
+            frame['contains'] = frame['contains'] | frame[column_segment].str.contains(expression, regex=True, flags=re.I)
         
-        frame = (frame
-                    .groupby(['contains', 'numero_processo'])
-                    .agg({column_sentence: lambda values: f'{self.sentence_sep}'.join(values)})
-                    .loc[True] )
+        frame = (frame.loc[lambda x: x['contains'] == True]
+                    .groupby(['numero_processo'])
+                    .agg({column_segment: lambda values: ' '.join(values)})
+                )
         
         frame = pd.merge(df['numero_processo'], frame, how='left', left_on='numero_processo', right_index=True)
 
