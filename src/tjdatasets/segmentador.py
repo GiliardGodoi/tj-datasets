@@ -105,7 +105,8 @@ def __segmentar(frame: pd.DataFrame, segment_name: str, column_senteces: str):
         
     return (frame.loc[lambda x: x['contains'] == True]
                 .groupby(['numero_processo'])
-                .agg({column_segment: lambda values: ' '.join(values)})
+                .agg({column_senteces: lambda values: ' '.join(values)})
+                .rename(columns={column_senteces : column_segment })
             )
 
 def obter_todos_segmentos(df : pd.DataFrame):
