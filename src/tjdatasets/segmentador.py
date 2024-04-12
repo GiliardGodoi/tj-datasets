@@ -37,7 +37,7 @@ abbreviations = {
 
 SEGMENT_EXPRESSIONS = {
     'lei' : [
-        '[\\s,]lei[\\s,]', 
+        '[\s,]lei[\s,]', 
         's[úu]mula', 
         'artigo', 
         'c[óo]digo'
@@ -76,13 +76,13 @@ SEGMENT_EXPRESSIONS = {
         'homolog.{1,10}acordo'
     ],
     'pedido' : [
-        '[\\s,]pede[\\s,]',
-        '[\\s,]pedido[\\s,]',
+        '[\s,]pede[\s,]',
+        '[\s,]pedido[\s,]',
         'pleitea',
         'pretende',
         'seja condenado',
         'seja deferido',
-        '[\\s,]solicita[\\s,]']
+        '[\s,]solicita[\s,]']
 }
 
 punkt_param = PunktParameters()
@@ -90,8 +90,52 @@ punkt_param.abbrev_types = abbreviations
 
 _tokenizer = PunktSentenceTokenizer(punkt_param)
 
-def sentence_tokenize(text):
+def __sentence_tokenize(text):
     return _tokenizer.tokenize(text)
+
+def __segmentar(frame: pd.DataFrame, segment_name: str, column_senteces: str):
+    '''
+    '''
+    column_segment = f'segmento_{segment_name}'
+    frame['contains'] = False
+
+    for expression in SEGMENT_EXPRESSIONS[segment_name]:
+            # pandas, assim como Python, suporta algo chamado short-circuit evaluation
+            frame['contains'] = frame['contains'] | frame[column_senteces].str.contains(expression, regex=True, flags=re.I)
+        
+    return (frame.loc[lambda x: x['contains'] == True]
+                .groupby(['numero_processo'])
+                .agg({column_segment: lambda values: ' '.join(values)})
+            )
+
+def obter_todos_segmentos(df : pd.DataFrame):
+    '''
+    '''
+    columns_dtypes = {column: df[column].dtype for column in df.columns}
+    columns_dtypes.update(dict(numero_processo='category',
+                                    id_documento='category',
+                                    conteudo='string',
+                                    formatado='string',
+                                    codigos_movimentos_temas='string')
+                        )
+    df = df.astype(columns_dtypes)
+
+    # Essa é a parte do código que mais demora para executar
+    frame = df[['numero_processo', 'id_documento']].copy()
+    frame['sentences'] = df['formatado'].apply(__sentence_tokenize)
+    frame = frame.explode('sentences')
+
+    segmento_lei     = __segmentar(frame, segment_name='lei', column_senteces='sentences')
+    segmento_fato    = __segmentar(frame, segment_name='fato', column_senteces='sentences')
+    segmento_decisao = __segmentar(frame, segment_name='decisao', column_senteces='sentences')
+    segmento_pedido  = __segmentar(frame, segment_name='pedido', column_senteces='sentences')
+    
+    result = pd.merge(df['numero_processo'], segmento_lei, how='left', left_on='numero_processo', right_index=True)
+    result = pd.merge(result, segmento_fato, how='left', left_on='numero_processo', right_index=True)
+    result = pd.merge(result, segmento_decisao, how='left', left_on='numero_processo', right_index=True)
+    result = pd.merge(result, segmento_pedido, how='left', left_on='numero_processo', right_index=True)
+
+    return result
 
 
 class Segmentador(BaseEstimator, TransformerMixin):
@@ -137,7 +181,7 @@ class Segmentador(BaseEstimator, TransformerMixin):
         # Essa ainda é a parte mais lenta do código
         # primeiro separamos o documentos em frases
         # setence_tokenize retorna uma lista de frases
-        frame[column_segment] = df['formatado'].apply(sentence_tokenize)
+        frame[column_segment] = df['formatado'].apply(__sentence_tokenize)
         # .explode transforma cada item da lista uma nova linha
         # de um novo dataframe
         frame = frame.explode(column_segment)
