@@ -37,52 +37,53 @@ abbreviations = {
 
 SEGMENT_EXPRESSIONS = {
     'lei' : [
-        '[\s,]lei[\s,]', 
-        's[úu]mula', 
-        'artigo', 
-        'c[óo]digo'
+        r'[\s,]lei[\s,]', 
+        r's[úu]mula', 
+        r'artigo', 
+        r'c[óo]digo'
     ],
     'fato' : [
-        'aduz',
-        'afirma',
-        'argumenta',
-        'assever',
-        'constata-se',
-        'deduz',
-        'esclarece',
-        'laudo',
-        'no caso',
-        'per[íi]cia',
-        'prova',
-        'sustenta',
-        'trata\\-se'
+        r'aduz',
+        r'afirma',
+        r'argumenta',
+        r'assever',
+        r'constata-se',
+        r'deduz',
+        r'esclarece',
+        r'laudo',
+        r'no caso',
+        r'per[íi]cia',
+        r'prova',
+        r'sustenta',
+        r'trata-se'
     ],
     'decisao' : [
-        'absolv',
-        'acolhimento',
-        'acordam',
-        'arquive',
-        'celeb.{1,10}acordo',
-        'conced',
-        'conden',
-        'dar.{,10}provimento',
-        'determino',
-        'expeça',
-        'extingo',
-        'proced.ncia',
-        'procedente',
-        'provido',
-        'provimento',
-        'homolog.{1,10}acordo'
+        r'absolv',
+        r'acolhimento',
+        r'acordam',
+        r'arquive',
+        r'celeb.{1,10}acordo',
+        r'conced',
+        r'conden',
+        r'dar.{,10}provimento',
+        r'determino',
+        r'expeça',
+        r'extingo',
+        r'proced.ncia',
+        r'procedente',
+        r'provido',
+        r'provimento',
+        r'homolog.{1,10}acordo'
     ],
     'pedido' : [
-        '[\s,]pede[\s,]',
-        '[\s,]pedido[\s,]',
-        'pleitea',
-        'pretende',
-        'seja condenado',
-        'seja deferido',
-        '[\s,]solicita[\s,]']
+        r'[\s,]pede[\s,]',
+        r'[\s,]pedido[\s,]',
+        r'pleitea',
+        r'pretende',
+        r'seja condenado',
+        r'seja deferido',
+        r'[\s,]solicita[\s,]'
+    ]
 }
 
 punkt_param = PunktParameters()
