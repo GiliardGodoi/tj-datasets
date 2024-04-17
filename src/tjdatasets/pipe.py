@@ -87,10 +87,6 @@ class PreProcessamentoNormalizado(BaseEstimator, TransformerMixin):
   Converte o texto para o formato 'Normalizado'
 
   São aplicadas as seguintes operações:
-    - Remove ruído do cabeçalho e rodapé
-    - Remove cabeçalho
-    - Remove rodapé
-    - Remove caracteres em branco duplos (espaços em branco)
     - Converte para letras minúsculas
     - Remove o acento das palavras
     - Regulariza expressões    (definidas em STANDART_EXPRESSIONS)
