@@ -146,14 +146,12 @@ class Segmentador(BaseEstimator, TransformerMixin):
     def __init__(self,
                  segment_name=None,
                  text_column='formatado',
-                 sentence_sep=' ',
-                 safe_dtypes=False):
+                 sentence_sep=' '):
         print('Segmentador v.4')
         assert segment_name in SEGMENT_EXPRESSIONS.keys(), f'O nome do segmento precisa ser um dos seguintes: lei, fato, decisao, pedido'
 
         self.text_column = text_column
         self.segment_name = segment_name
-        self.safe_dtypes = safe_dtypes
         self.column_segment = f"segmento_{segment_name}"
         self.sentence_sep = sentence_sep
 
