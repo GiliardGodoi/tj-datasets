@@ -91,7 +91,7 @@ punkt_param.abbrev_types = abbreviations
 
 _tokenizer = PunktSentenceTokenizer(punkt_param)
 
-def __sentence_tokenize(text):
+def sentencizer(text):
     return _tokenizer.tokenize(text)
 
 def __segmentar(frame: pd.DataFrame, segment_name: str, column_senteces: str):
@@ -124,7 +124,7 @@ def obter_todos_segmentos(df : pd.DataFrame):
 
     # Essa é a parte do código que mais demora para executar
     frame = df[['numero_processo', 'id_documento']].copy()
-    frame['sentences'] = df['formatado'].apply(__sentence_tokenize)
+    frame['sentences'] = df['formatado'].apply(sentencizer)
     frame = frame.explode('sentences')
 
     segmento_lei     = __segmentar(frame, segment_name='lei', column_senteces='sentences')
@@ -183,7 +183,7 @@ class Segmentador(BaseEstimator, TransformerMixin):
         # Essa ainda é a parte mais lenta do código
         # primeiro separamos o documentos em frases
         # setence_tokenize retorna uma lista de frases
-        frame[column_segment] = df['formatado'].apply(__sentence_tokenize)
+        frame[column_segment] = df['formatado'].apply(sentencizer)
         # .explode transforma cada item da lista uma nova linha
         # de um novo dataframe
         frame = frame.explode(column_segment)
