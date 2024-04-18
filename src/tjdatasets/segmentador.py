@@ -145,21 +145,17 @@ class Segmentador(BaseEstimator, TransformerMixin):
     '''
     def __init__(self,
                  segment_name=None,
+                 text_column='formatado',
                  sentence_sep=' ',
                  safe_dtypes=False):
-        
+        print('Segmentador v.4')
         assert segment_name in SEGMENT_EXPRESSIONS.keys(), f'O nome do segmento precisa ser um dos seguintes: lei, fato, decisao, pedido'
 
+        self.text_column = text_column
         self.segment_name = segment_name
         self.safe_dtypes = safe_dtypes
         self.column_segment = f"segmento_{segment_name}"
         self.sentence_sep = sentence_sep
-        self.mapping_dtypes = defaultdict(lambda : 'object',  # default
-                     numero_processo='category',
-                     id_documento='category',
-                     conteudo='string',
-                     formatado='string',
-                     codigos_movimentos_temas='string')
 
     def fit(self, X):
         return self
@@ -167,23 +163,29 @@ class Segmentador(BaseEstimator, TransformerMixin):
     def transform(self, df):
         '''
         '''
-        column_segment = self.column_segment
-
         # Os tipos das colunas são alterados para efeito de otimização
         # numero_processo é transformado de string para category, por exemplo
-        if self.safe_dtypes:
-            columns_dtypes = {column: df[column].dtype for column in df.columns}
-            columns_dtypes.update(self.mapping_dtypes)
+        if isinstance(df, pd.Series):
+            df = df.to_frame(name=self.text_column)
+            df['numero_processo'] = df.index.values
+            df['numero_processo'] = df['numero_processo'].astype('category')
+        
+        elif isinstance(df, pd.DataFrame) and 'numero_processo' in df.columns:
+            df['numero_processo'] = df['numero_processo'].astype('category')
+        elif isinstance(df, pd.DataFrame):
+            df['numero_processo'] = df.index.values
+            df['numero_processo'] = df['numero_processo'].astype('category')
         else:
-            columns_dtypes = self.mapping_dtypes
-        # change columns dtype for optimization purposes
-        df = df.astype(columns_dtypes)
+            raise TypeError(f'Expected a pd.Series or pd.DataFrame, but was given {type(df)}')
+        
+        df[self.text_column] = df[self.text_column].astype('string')
+        column_segment = self.column_segment
 
-        frame = df[['numero_processo', 'id_documento']].copy()
+        frame = df[['numero_processo']].copy()
         # Essa ainda é a parte mais lenta do código
         # primeiro separamos o documentos em frases
         # setence_tokenize retorna uma lista de frases
-        frame[column_segment] = df['formatado'].apply(sentencizer)
+        frame[column_segment] = df[self.text_column].apply(sentencizer)
         # .explode transforma cada item da lista uma nova linha
         # de um novo dataframe
         frame = frame.explode(column_segment)
@@ -195,9 +197,10 @@ class Segmentador(BaseEstimator, TransformerMixin):
         
         frame = (frame.loc[lambda x: x['contains'] == True]
                     .groupby(['numero_processo'])
-                    .agg({column_segment: lambda values: ' '.join(values)})
+                    .agg({column_segment: lambda values: f'{self.sentence_sep}'.join(values)})
                 )
         
         frame = pd.merge(df['numero_processo'], frame, how='left', left_on='numero_processo', right_index=True)
+        frame.set_index('numero_processo', inplace=True)
 
         return frame
