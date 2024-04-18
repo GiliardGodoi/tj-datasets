@@ -7,6 +7,9 @@ from .utils import (CUSTO_STOPWORDS,
                     STANDART_EXPRESSIONS,
                     DEFAULT_PUNCTUATION, TABLE_REMOVE_LOWER_ACCENTS)
 
+# compilar as expressões para verificar se executa mais rápido. dict-comprehension
+STANDART_EXPRESSIONS = {re.compile(key, flags=re.M | re.I) : value for key, value in STANDART_EXPRESSIONS.items() }
+
 def detect_header(s1, s2, minHeaderLen=15):
     """
     Identifica como header o texto que se repete no início de páginas seguidas
@@ -257,7 +260,7 @@ def remove_punctuation(text : str, punctuation=DEFAULT_PUNCTUATION) -> str:
 
 def regularize_expressions(text : str, mapper=STANDART_EXPRESSIONS) -> str:
     for pattern, replace in mapper.items():
-        text = re.sub(pattern, replace, text, flags = re.MULTILINE | re.IGNORECASE)
+        text = re.sub(pattern, replace, text)
 
     return text
 
