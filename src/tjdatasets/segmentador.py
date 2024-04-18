@@ -147,7 +147,6 @@ class Segmentador(BaseEstimator, TransformerMixin):
                  segment_name=None,
                  text_column='formatado',
                  sentence_sep=' '):
-        print('Segmentador v.4')
         assert segment_name in SEGMENT_EXPRESSIONS.keys(), f'O nome do segmento precisa ser um dos seguintes: lei, fato, decisao, pedido'
 
         self.text_column = text_column
