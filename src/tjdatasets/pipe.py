@@ -12,15 +12,15 @@ from .fragmentador import (
 )
 
 from .preprocessing import (
-    remove_noise_from_header, 
-    remove_header, 
+    remove_noise_from_header,
+    remove_header,
     remove_footer,
     remove_punctuation,
     regularize_expressions,
     remove_special_case_words,
 )
 
-from .utils import (CUSTO_STOPWORDS, 
+from .utils import (CUSTO_STOPWORDS,
                     DEFAULT_PUNCTUATION,
                     PATTERN_REMOVE_EXTRA_SPACE,
                     PATTERN_REMOVE_SPECIAL_CHARS,
@@ -34,7 +34,7 @@ def _check_input_type(X, column_text) -> pd.Series:
     documents = X[column_text]
   else:
     raise TypeError(f'Expected pd.Series or pd.DataFrame, but received {type(X)}')
-  
+
   return documents
 
 class PreProcessamentoLimpo(BaseEstimator, TransformerMixin):
@@ -49,12 +49,12 @@ class PreProcessamentoLimpo(BaseEstimator, TransformerMixin):
     - Remove caracteres em branco duplos (espaços em branco)
     - Remove caracteres em branco do início e fim do documento (.strip)
 
-  
-  Recebe como parâmetro um pandas DataFrame ou um pandas Series. 
+
+  Recebe como parâmetro um pandas DataFrame ou um pandas Series.
 
   Retorna um pandas Series com os documentos (textos) formatados.
   '''
-  
+
   def __init__(self, column_text='conteudo'):
     '''Inicializa a classe.
 
@@ -65,7 +65,7 @@ class PreProcessamentoLimpo(BaseEstimator, TransformerMixin):
 
   def fit(self, X, y=None):
     return self
-  
+
   def transform(self, X):
     '''Aplica as operações para conversão do texto para o formato Limpo'''
 
@@ -96,11 +96,11 @@ class PreProcessamentoNormalizado(BaseEstimator, TransformerMixin):
         - palavras com comprimento mínimo ou menor (min_length é definido por padrão como 3)
         - Porém tenta preservar algumas palavras definidas em words_do_not_remove
 
-  Recebe como parâmetro um pandas DataFrame ou um pandas Series. 
+  Recebe como parâmetro um pandas DataFrame ou um pandas Series.
 
   Retorna um pandas Series com os documentos (textos) formatados.
   '''
-  
+
   def __init__(self, column_text='formatado'):
     '''Inicializa a classe.
 
@@ -109,13 +109,13 @@ class PreProcessamentoNormalizado(BaseEstimator, TransformerMixin):
     '''
     self.column_text = column_text
 
-    self.words_do_not_remove = {'nao', 'lei', 'ato', 
-                                'reu', 'mes', 'ano', 
+    self.words_do_not_remove = {'nao', 'lei', 'ato',
+                                'reu', 'mes', 'ano',
                                 'dia', 'reu', 'quo', 'jus'}
 
   def fit(self, X, y=None):
     return self
-  
+
   def transform(self, X):
     '''
     '''
@@ -126,44 +126,18 @@ class PreProcessamentoNormalizado(BaseEstimator, TransformerMixin):
               .str.translate(TABLE_REMOVE_LOWER_ACCENTS)
               .apply(regularize_expressions, mapper=STANDART_EXPRESSIONS)
               .apply(remove_punctuation, punctuation=DEFAULT_PUNCTUATION)
-              .apply(remove_special_case_words, 
-                     stopwords=CUSTO_STOPWORDS, 
-                     spare_words=self.words_do_not_remove, 
+              .apply(remove_special_case_words,
+                     stopwords=CUSTO_STOPWORDS,
+                     spare_words=self.words_do_not_remove,
                      min_length=3)
               .str.strip() # remove espaço em branco no começo e no final do texto
             )
 
     return result
 
-def _get_fragmento(texto):
+class ProcessamentoFundamentacao(BaseEstimator, TransformerMixin):
 
-  relator = identifica_nome_relator(texto)
-  voto    = identifica_voto_relator(texto, relator)
-  relatorio = identifica_relatorio_voto(texto, voto)
-  fundamentacao = identifica_fundamentacao_voto(texto, voto, relatorio)
-
-  # por padrão, retorna o texto completo do documento
-  fragmento_texto = texto
-  fragmento_nome  = 'conteudo_original'
-  fragmento_span  = (0, len(texto))
-
-  # em caso de sucesso rule > 0
-  if fundamentacao.rule > 0 :
-      fragmento_texto = fundamentacao.text
-      fragmento_nome  = fundamentacao.name
-      fragmento_span  = fundamentacao.span
-  elif voto.rule > 0 :
-      fragmento_texto = voto.text
-      fragmento_nome  = voto.name
-      fragmento_span  = voto.span
-
-  return {'texto' : fragmento_texto, 
-          'fragmento_nome' : fragmento_nome, 
-          'fragmento_span' : fragmento_span }
-
-class ProcessamentoFragmentador(BaseEstimator, TransformerMixin):
-  
-  def __init__(self, 
+  def __init__(self,
                column_text='conteudo',
                as_dataframe=False):
     '''Inicializa a classe.
@@ -176,8 +150,8 @@ class ProcessamentoFragmentador(BaseEstimator, TransformerMixin):
 
   def fit(self, X, y=None):
     return self
-  
-  def transform(self, X):
+
+  def transform(self, X, y=None):
     '''
     '''
     documents = _check_input_type(X, self.column_text)
@@ -186,13 +160,90 @@ class ProcessamentoFragmentador(BaseEstimator, TransformerMixin):
                           .str.replace(PATTERN_REMOVE_EXTRA_SPACE, ' ', regex=True)
                           .str.lower()
                           .str.translate(TABLE_REMOVE_LOWER_ACCENTS) )
-    
+
     results = (documents
-               .apply(_get_fragmento)
+               .apply(self._get_fundamentacao)
                .apply(pd.Series)
                )
-    
+
     if not self.as_dataframe:
       results = results['texto']
 
     return results
+
+
+  def _get_fundamentacao(self, texto):
+
+    relator = identifica_nome_relator(texto)
+    voto    = identifica_voto_relator(texto, relator)
+    relatorio = identifica_relatorio_voto(texto, voto)
+    fundamentacao = identifica_fundamentacao_voto(texto, voto, relatorio)
+
+    # por padrão, retorna o texto completo do documento
+    fragmento_texto = texto
+    fragmento_nome  = 'conteudo_original'
+    fragmento_span  = (0, len(texto))
+
+    # em caso de sucesso rule > 0
+    if fundamentacao.rule > 0 :
+        fragmento_texto = fundamentacao.text
+        fragmento_nome  = fundamentacao.name
+        fragmento_span  = fundamentacao.span
+    elif voto.rule > 0 :
+        fragmento_texto = voto.text
+        fragmento_nome  = voto.name
+        fragmento_span  = voto.span
+
+    return {'texto' : fragmento_texto,
+            'fragmento_nome' : fragmento_nome,
+            'fragmento_span' : fragmento_span }
+
+
+class ProcessamentoVotoRelator(BaseEstimator, TransformerMixin):
+
+  def __init__(self,
+               column_text='conteudo',
+               as_dataframe=False):
+
+    self.column_text = column_text
+    self.as_dataframe = as_dataframe
+
+  def fit(self, X, y=None):
+    return self
+
+  def transform(self, X, y=None, *args):
+    '''
+    '''
+    documents = _check_input_type(X, self.column_text)
+
+    documents = (documents.str.replace(PATTERN_REMOVE_SPECIAL_CHARS, ' ', regex=True)
+                          .str.replace(PATTERN_REMOVE_EXTRA_SPACE, ' ', regex=True)
+                          .str.lower()
+                          .str.translate(TABLE_REMOVE_LOWER_ACCENTS) )
+
+    results = (documents
+               .apply(self._get_voto_relator)
+               .apply(pd.Series)
+              )
+
+    if not self.as_dataframe:
+      results = results['texto']
+
+    return results
+
+  def _get_voto_relator(self, texto):
+    relator = identifica_nome_relator(texto)
+    voto    = identifica_voto_relator(texto, relator)
+
+    if voto.rule > 0:
+      fragmento_texto = voto.text
+      fragmento_nome  = voto.name
+      fragmento_span  = voto.span
+    else :
+      fragmento_texto = texto
+      fragmento_nome  = 'conteudo_original'
+      fragmento_span  = (0, len(texto))
+
+    return {'texto' : fragmento_texto,
+            'fragmento_nome' : fragmento_nome,
+            'fragmento_span' : fragmento_span }
