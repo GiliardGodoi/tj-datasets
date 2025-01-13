@@ -198,6 +198,67 @@ class ProcessamentoFundamentacao(BaseEstimator, TransformerMixin):
             'fragmento_nome' : fragmento_nome,
             'fragmento_span' : fragmento_span }
 
+class ProcessamentoRelatorio(BaseEstimator, TransformerMixin):
+
+  def __init__(self,
+               column_text='conteudo',
+               as_dataframe=False):
+    '''Inicializa a classe.
+
+    Parâmetros:
+      column_text: quando um pd.DataFrame é passado como entrada, define a coluna que contém os documentos a serem processados.
+    '''
+    self.column_text = column_text
+    self.as_dataframe = as_dataframe
+
+  def fit(self, X, y=None):
+    return self
+
+  def transform(self, X, y=None):
+    '''
+    '''
+    documents = _check_input_type(X, self.column_text)
+
+    documents = (documents.str.replace(PATTERN_REMOVE_SPECIAL_CHARS, ' ', regex=True)
+                          .str.replace(PATTERN_REMOVE_EXTRA_SPACE, ' ', regex=True)
+                          .str.lower()
+                          .str.translate(TABLE_REMOVE_LOWER_ACCENTS) )
+
+    results = (documents
+               .apply(self._get_relatorio)
+               .apply(pd.Series)
+               )
+
+    if not self.as_dataframe:
+      results = results['texto']
+
+    return results
+
+
+  def _get_relatorio(self, texto):
+
+    relator = identifica_nome_relator(texto)
+    voto    = identifica_voto_relator(texto, relator)
+    relatorio = identifica_relatorio_voto(texto, voto)
+
+    # por padrão, retorna o texto completo do documento
+    fragmento_texto = texto
+    fragmento_nome  = 'conteudo_original'
+    fragmento_span  = (0, len(texto))
+
+    # em caso de sucesso rule > 0
+    if relatorio.rule > 0 :
+        fragmento_texto = relatorio.text
+        fragmento_nome  = relatorio.name
+        fragmento_span  = relatorio.span
+    elif voto.rule > 0 :
+        fragmento_texto = voto.text
+        fragmento_nome  = voto.name
+        fragmento_span  = voto.span
+
+    return {'texto' : fragmento_texto,
+            'fragmento_nome' : fragmento_nome,
+            'fragmento_span' : fragmento_span }
 
 class ProcessamentoVotoRelator(BaseEstimator, TransformerMixin):
 
